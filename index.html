@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesFlow</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#09090b;--bg2:#18181b;--bg3:#27272a;--bg4:#3f3f46;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#71717a;
+  --accent:#8b5cf6;--accent2:#7c3aed;--accent-glow:rgba(139,92,246,0.2);
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;
+  --radius:12px;--radius-lg:16px;
+  --font:'Satoshi',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+input,select,textarea,button{font-family:var(--font);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+
+/* LAYOUT */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:240px;background:var(--bg2);border-right:1px solid var(--bg3);padding:24px 16px;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.sidebar .logo{font-size:1.3rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+.sidebar .logo span{color:var(--accent);}
+.sidebar .user{font-size:0.8rem;color:var(--text3);margin-bottom:24px;}
+.sidebar nav{flex:1;display:flex;flex-direction:column;gap:2px;}
+.sidebar nav button{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border:none;background:none;
+  color:var(--text2);font-size:0.88rem;font-weight:500;border-radius:var(--radius);cursor:pointer;
+  transition:all .15s;text-align:left;width:100%;
+}
+.sidebar nav button:hover{background:var(--bg3);color:var(--text);}
+.sidebar nav button.active{background:var(--accent-glow);color:var(--accent);font-weight:600;}
+.sidebar nav button .badge{
+  margin-left:auto;background:var(--red);color:white;font-size:0.7rem;font-weight:700;
+  padding:2px 7px;border-radius:10px;
+}
+.sidebar .bottom{margin-top:auto;padding-top:16px;border-top:1px solid var(--bg3);}
+.sidebar .bottom button{
+  width:100%;padding:8px;border:1px solid var(--bg4);background:none;color:var(--text3);
+  border-radius:var(--radius);cursor:pointer;font-size:0.82rem;
+}
+.sidebar .bottom button:hover{border-color:var(--red);color:var(--red);}
+
+.main{margin-left:240px;flex:1;padding:32px 40px;min-height:100vh;}
+.page-title{font-size:1.8rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:24px;}
+.page-title .sub{font-size:0.85rem;color:var(--text3);font-weight:400;margin-top:4px;}
+
+/* CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;}
+.kpi{
+  background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius-lg);padding:20px;
+  transition:transform .15s;
+}
+.kpi:hover{transform:translateY(-2px);}
+.kpi .label{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:6px;}
+.kpi .value{font-size:1.5rem;font-weight:700;font-family:var(--mono);}
+.kpi .value.green{color:var(--green);}
+.kpi .value.amber{color:var(--amber);}
+.kpi .value.red{color:var(--red);}
+.kpi .value.accent{color:var(--accent);}
+
+/* TABLE */
+.table-wrap{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;}
+.table-wrap table{width:100%;border-collapse:collapse;}
+.table-wrap th{
+  background:var(--bg3);padding:12px 16px;text-align:left;font-size:0.75rem;
+  text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);font-weight:600;
+}
+.table-wrap td{padding:12px 16px;border-top:1px solid var(--bg3);font-size:0.88rem;color:var(--text2);}
+.table-wrap tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* STATUS BADGES */
+.badge-status{display:inline-block;padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:600;}
+.badge-status.en-cours{background:rgba(251,191,36,0.12);color:var(--amber);}
+.badge-status.validee{background:rgba(34,197,94,0.12);color:var(--green);}
+.badge-status.livree{background:rgba(139,92,246,0.12);color:var(--accent);}
+.badge-status.annulee{background:rgba(239,68,68,0.12);color:var(--red);}
+.badge-tech{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.72rem;font-weight:600;background:var(--accent-glow);color:var(--accent);margin-right:4px;}
+
+/* FORMS */
+.form-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius-lg);padding:28px;margin-bottom:24px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:0.78rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.form-group input,.form-group select,.form-group textarea{
+  background:var(--bg);border:1px solid var(--bg4);border-radius:10px;
+  padding:10px 14px;color:var(--text);font-size:0.9rem;outline:none;transition:border .2s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-group select{cursor:pointer;}
+
+/* BUTTONS */
+.btn{
+  padding:10px 20px;border:none;border-radius:10px;font-size:0.88rem;font-weight:600;
+  cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{background:var(--accent2);box-shadow:0 4px 16px var(--accent-glow);}
+.btn-danger{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.2);}
+.btn-danger:hover{background:rgba(239,68,68,0.2);}
+.btn-ghost{background:none;color:var(--text2);border:1px solid var(--bg4);}
+.btn-ghost:hover{border-color:var(--text3);color:var(--text);}
+.btn-sm{padding:6px 12px;font-size:0.8rem;}
+
+/* PENDING CARD */
+.pending-card{
+  background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius-lg);
+  padding:24px;margin-bottom:16px;
+}
+.pending-card h4{font-size:1rem;font-weight:700;margin-bottom:8px;}
+.pending-card .meta{font-size:0.85rem;color:var(--text2);margin-bottom:12px;}
+.pending-card .meta b{color:var(--text);}
+
+/* PROFIL */
+.profil-header{
+  background:linear-gradient(135deg,#1e1b4b,#312e81);
+  border-radius:var(--radius-lg);padding:32px;margin-bottom:24px;
+}
+.profil-header h3{font-size:1.4rem;font-weight:700;margin-bottom:8px;}
+.profil-header p{color:#c7d2fe;font-size:0.9rem;margin:2px 0;}
+.profil-badge{
+  display:inline-block;background:rgba(139,92,246,0.2);color:#a5b4fc;
+  padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;margin-top:12px;
+}
+.cred-box{
+  background:var(--bg);border:1px solid var(--bg3);border-radius:var(--radius);
+  padding:16px;font-family:var(--mono);font-size:0.85rem;color:var(--text2);margin-bottom:16px;white-space:pre-wrap;
+}
+.note-item{
+  background:var(--bg);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;
+  padding:12px 16px;margin:8px 0;
+}
+.note-item .note-meta{font-size:0.72rem;color:var(--text3);margin-bottom:4px;}
+
+/* SEARCH */
+.search-input{
+  background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);
+  padding:10px 16px;color:var(--text);font-size:0.9rem;width:100%;outline:none;margin-bottom:24px;
+}
+.search-input:focus{border-color:var(--accent);}
+
+/* COST LINE */
+.cost-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg);border:1px solid var(--bg3);border-radius:var(--radius);
+  padding:14px 18px;margin-bottom:8px;
+}
+.cost-item .name{font-weight:600;color:var(--accent);}
+.cost-item .price{font-family:var(--mono);font-weight:600;}
+
+/* PROGRESS */
+.progress-bar{background:var(--bg3);border-radius:10px;height:28px;overflow:hidden;margin:8px 0;}
+.progress-fill{height:100%;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;font-family:var(--mono);color:white;transition:width .6s;}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;background:var(--green);color:white;
+  padding:12px 20px;border-radius:var(--radius);font-weight:600;font-size:0.88rem;
+  box-shadow:0 4px 24px rgba(0,0,0,0.3);z-index:9999;animation:slideIn .3s;
+}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* LOGIN */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.login-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:20px;padding:48px;width:400px;text-align:center;}
+.login-card h1{font-size:1.8rem;font-weight:800;margin-bottom:4px;}
+.login-card h1 span{color:var(--accent);}
+.login-card .sub{color:var(--text3);font-size:0.88rem;margin-bottom:32px;}
+.login-card .form-group{text-align:left;margin-bottom:16px;}
+.login-card .btn{width:100%;justify-content:center;margin-top:8px;}
+.login-card .hint{font-size:0.78rem;color:var(--text3);margin-top:16px;}
+
+/* FAB */
+.fab{
+  position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;
+  background:var(--accent);color:white;border:none;font-size:24px;cursor:pointer;
+  box-shadow:0 6px 24px var(--accent-glow);transition:all .2s;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+}
+.fab:hover{transform:scale(1.1);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--bg2);border:1px solid var(--bg3);border-radius:20px;padding:32px;width:560px;max-height:80vh;overflow-y:auto;}
+.modal h3{font-size:1.2rem;font-weight:700;margin-bottom:20px;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{width:60px;padding:16px 8px;}
+  .sidebar .logo span,.sidebar .user,.sidebar nav button span,.sidebar .bottom{display:none;}
+  .sidebar nav button{justify-content:center;padding:12px;}
+  .main{margin-left:60px;padding:20px;}
+  .form-row{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+}
+
+.divider{border:none;border-top:1px solid var(--bg3);margin:24px 0;}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;}
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:0.9rem;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.tabs{display:flex;gap:4px;margin-bottom:24px;}
+.tabs button{padding:8px 16px;border:none;background:none;color:var(--text3);font-weight:600;border-radius:8px 8px 0 0;cursor:pointer;font-size:0.85rem;}
+.tabs button.active{background:var(--bg3);color:var(--text);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+// ━━━ CONFIG ━━━
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'VOTRE_URL_API_ICI';
+const TECHNIQUES = ["FTID", "LIT", "RTS", "DNA", "EB"];
+
+// ━━━ API HELPERS ━━━
+async function api(path, opts = {}) {
+  const token = localStorage.getItem('token');
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }), ...opts.headers },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+const fmt = (n) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+const statusClass = (s) => s === 'En cours' ? 'en-cours' : s === 'Validée' ? 'validee' : s === 'Livrée' ? 'livree' : 'annulee';
+
+// ━━━ TOAST ━━━
+function Toast({ msg, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
+  return <div className="toast">{msg}</div>;
+}
+
+// ━━━ LOGIN ━━━
+function LoginPage({ onLogin }) {
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  const [err, setErr] = useState('');
+  const submit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = await api('/api/login', { method: 'POST', body: { username: u, password: p } });
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.username);
+      onLogin(data.username);
+    } catch { setErr('Identifiants incorrects'); }
+  };
+  return (
+    <div className="login-page">
+      <form className="login-card" onSubmit={submit}>
+        <h1>⚡ Sales<span>Flow</span></h1>
+        <p className="sub">Gestion des Ventes</p>
+        <div className="form-group">
+          <label>Identifiant</label>
+          <input value={u} onChange={e => setU(e.target.value)} placeholder="admin" />
+        </div>
+        <div className="form-group">
+          <label>Mot de passe</label>
+          <input type="password" value={p} onChange={e => setP(e.target.value)} placeholder="••••" />
+        </div>
+        {err && <p style={{color:'var(--red)',fontSize:'0.85rem',margin:'8px 0'}}>{err}</p>}
+        <button className="btn btn-primary" type="submit">Se connecter</button>
+        <p className="hint">Par défaut : admin / admin</p>
+      </form>
+    </div>
+  );
+}
+
+// ━━━ MODAL ━━━
+function Modal({ children, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>{children}</div>
+    </div>
+  );
+}
+
+// ━━━ DASHBOARD ━━━
+function Dashboard({ onNav }) {
+  const [d, setD] = useState(null);
+  const load = useCallback(() => api('/api/dashboard').then(setD), []);
+  useEffect(() => { load(); }, [load]);
+  if (!d) return <div className="empty">Chargement...</div>;
+  return (
+    <div>
+      <div className="flex-between">
+        <div><h1 className="page-title">📊 Dashboard</h1></div>
+      </div>
+      {d.pending > 0 && <div style={{background:'rgba(251,191,36,0.1)',border:'1px solid rgba(251,191,36,0.2)',borderRadius:'var(--radius)',padding:'12px 16px',marginBottom:16,color:'var(--amber)',fontWeight:600}}>📩 {d.pending} demande(s) en attente</div>}
+      <div className="kpi-grid">
+        <div className="kpi"><div className="label">Acheteurs</div><div className="value">{d.acheteurs}</div></div>
+        <div className="kpi"><div className="label">Commandes</div><div className="value">{d.commandes}</div></div>
+        <div className="kpi"><div className="label">CA Total</div><div className="value">{fmt(d.ca)} €</div></div>
+        <div className="kpi"><div className="label">Coûts</div><div className="value red">{fmt(d.couts)} €</div></div>
+        <div className="kpi"><div className="label">Net à venir</div><div className="value amber">{fmt(d.net_a_venir)} €</div></div>
+        <div className="kpi"><div className="label">Reçu</div><div className="value green">{fmt(d.recu)} €</div></div>
+      </div>
+      <h3 className="section-title">🕐 Dernières commandes</h3>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Acheteur</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Coût</th><th>Statut</th></tr></thead>
+          <tbody>
+            {d.recent.map(c => (
+              <tr key={c.id}>
+                <td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td>
+                <td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td>
+                <td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td>
+                <td>{c.technique && <span className="badge-tech">{c.technique}</span>}</td>
+                <td style={{fontFamily:'var(--mono)'}}>{fmt(c.cout_total)} €</td>
+                <td><span className={`badge-status ${statusClass(c.statut)}`}>{c.statut}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ━━━ DEMANDES ━━━
+function Demandes({ toast }) {
+  const [dems, setDems] = useState([]);
+  const [tab, setTab] = useState('attente');
+  const load = () => api('/api/demandes').then(setDems);
+  useEffect(() => { load(); }, []);
+  const attente = dems.filter(d => d.statut === 'En attente');
+  const hist = dems.filter(d => d.statut !== 'En attente');
+
+  const [valForm, setValForm] = useState({});
+  const valider = async (did) => {
+    const f = valForm[did] || {};
+    await api(`/api/demandes/${did}/valider`, { method: 'POST', body: {
+      commission_mode: f.mode || 'pct', commission_pct: f.pct || 0, commission_eur: f.eur || 0,
+      technique: f.technique || '', notes_admin: f.notes || ''
+    }});
+    toast('Demande validée !'); load();
+  };
+  const rejeter = async (did) => { await api(`/api/demandes/${did}/rejeter`, { method: 'POST' }); toast('Rejetée'); load(); };
+
+  const upd = (did, k, v) => setValForm(prev => ({ ...prev, [did]: { ...prev[did], [k]: v } }));
+
+  return (
+    <div>
+      <h1 className="page-title">📩 Demandes</h1>
+      <div className="tabs">
+        <button className={tab==='attente'?'active':''} onClick={()=>setTab('attente')}>⏳ En attente ({attente.length})</button>
+        <button className={tab==='hist'?'active':''} onClick={()=>setTab('hist')}>📜 Historique</button>
+      </div>
+      {tab === 'attente' && (attente.length === 0 ? <div className="empty">Aucune demande 🎉</div> : attente.map(d => (
+        <div className="pending-card" key={d.id}>
+          <h4>#{d.id} — {d.nom_client}</h4>
+          <div className="meta">🛍️ <b>{d.boutique}</b> · 💶 <b>{fmt(d.montant)} €</b> · 📅 {d.date_soumission?.slice(0,10)}</div>
+          {d.notes_client && <p style={{fontSize:'0.85rem',color:'var(--text3)',marginBottom:8}}>💬 {d.notes_client}</p>}
+          {(d.identifiant_boutique || d.mdp_boutique) && <div className="cred-box">ID: {d.identifiant_boutique || '—'}{'\n'}MDP: {d.mdp_boutique || '—'}</div>}
+          <div className="form-row">
+            <div className="form-group">
+              <label>Commission</label>
+              <select onChange={e => upd(d.id,'mode',e.target.value)} value={valForm[d.id]?.mode||'pct'}>
+                <option value="pct">En %</option><option value="fixe">Fixe €</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>{(valForm[d.id]?.mode||'pct')==='pct'?'%':'€'}</label>
+              <input type="number" step="0.5" onChange={e => upd(d.id,(valForm[d.id]?.mode||'pct')==='pct'?'pct':'eur',+e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Technique</label>
+              <select onChange={e => upd(d.id,'technique',e.target.value)}>
+                <option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Notes</label>
+              <input onChange={e => upd(d.id,'notes',e.target.value)} placeholder="..." />
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-primary btn-sm" onClick={()=>valider(d.id)}>✅ Valider</button>
+            <button className="btn btn-danger btn-sm" onClick={()=>rejeter(d.id)}>❌ Rejeter</button>
+          </div>
+        </div>
+      )))}
+      {tab === 'hist' && (hist.length === 0 ? <div className="empty">Aucun historique</div> :
+        <div className="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Statut</th></tr></thead>
+          <tbody>{hist.map(d => <tr key={d.id}><td>{d.id}</td><td>{d.date_soumission?.slice(0,10)}</td><td>{d.nom_client}</td><td>{d.boutique}</td><td>{fmt(d.montant)} €</td><td><span className={`badge-status ${statusClass(d.statut)}`}>{d.statut}</span></td></tr>)}</tbody>
+        </table></div>
+      )}
+    </div>
+  );
+}
+
+// ━━━ COUTS ━━━
+function Couts({ toast }) {
+  const [couts, setCouts] = useState([]);
+  const [nom, setNom] = useState(TECHNIQUES[0]);
+  const [prix, setPrix] = useState(0);
+  const load = () => api('/api/couts').then(setCouts);
+  useEffect(() => { load(); }, []);
+  const save = async () => {
+    if (prix <= 0) return;
+    await api('/api/couts', { method: 'POST', body: { nom, prix } });
+    toast(`${nom} → ${prix} €`); load(); setPrix(0);
+  };
+  const del = async (n) => { await api(`/api/couts/${n}`, { method: 'DELETE' }); load(); };
+  return (
+    <div>
+      <h1 className="page-title">💰 Coûts<div className="sub">Prix définis une fois, appliqués automatiquement</div></h1>
+      {couts.map(c => (
+        <div className="cost-item" key={c.nom}>
+          <span className="name">{c.nom}</span>
+          <span className="price">{fmt(c.prix)} €</span>
+          <button className="btn btn-danger btn-sm" onClick={()=>del(c.nom)}>🗑️</button>
+        </div>
+      ))}
+      <hr className="divider" />
+      <div className="form-card">
+        <div className="form-row">
+          <div className="form-group"><label>Technique</label><select value={nom} onChange={e=>setNom(e.target.value)}>{TECHNIQUES.map(t=><option key={t}>{t}</option>)}</select></div>
+          <div className="form-group"><label>Prix (€)</label><input type="number" step="0.5" value={prix} onChange={e=>setPrix(+e.target.value)} /></div>
+        </div>
+        <button className="btn btn-primary" onClick={save}>💾 Enregistrer</button>
+      </div>
+    </div>
+  );
+}
+
+// ━━━ ACHETEURS ━━━
+function Acheteurs({ toast, onSelect }) {
+  const [achs, setAchs] = useState([]);
+  const [show, setShow] = useState(false);
+  const [f, setF] = useState({ nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:'' });
+  const [filter, setFilter] = useState('');
+  const load = () => api('/api/acheteurs').then(setAchs);
+  useEffect(() => { load(); }, []);
+  const add = async () => {
+    if (!f.nom.trim()) return;
+    await api('/api/acheteurs', { method:'POST', body:f });
+    toast(`${f.nom} ajouté`); setShow(false); setF({nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:''}); load();
+  };
+  const filtered = achs.filter(a => a.nom.toLowerCase().includes(filter.toLowerCase()));
+  return (
+    <div>
+      <div className="flex-between">
+        <h1 className="page-title">👤 Acheteurs</h1>
+        <button className="btn btn-primary" onClick={()=>setShow(true)}>➕ Ajouter</button>
+      </div>
+      <input className="search-input" placeholder="🔎 Filtrer..." value={filter} onChange={e=>setFilter(e.target.value)} />
+      <div className="table-wrap"><table>
+        <thead><tr><th>Nom</th><th>Parrain</th><th>Commission</th><th>Inscrit</th><th></th></tr></thead>
+        <tbody>{filtered.map(a => <tr key={a.id} style={{cursor:'pointer'}} onClick={()=>onSelect(a.id)}>
+          <td style={{fontWeight:600,color:'var(--text)'}}>{a.nom}</td><td>{a.parrain}</td><td>{a.commission_parrain}%</td><td>{a.date_creation?.slice(0,10)}</td>
+          <td><button className="btn btn-danger btn-sm" onClick={e=>{e.stopPropagation();api(`/api/acheteurs/${a.id}`,{method:'DELETE'}).then(load)}}>🗑️</button></td>
+        </tr>)}</tbody>
+      </table></div>
+      {show && <Modal onClose={()=>setShow(false)}>
+        <h3>Nouvel acheteur</h3>
+        <div className="form-row">
+          <div className="form-group"><label>Nom *</label><input value={f.nom} onChange={e=>setF({...f,nom:e.target.value})} /></div>
+          <div className="form-group"><label>Parrain</label><input value={f.parrain} onChange={e=>setF({...f,parrain:e.target.value})} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Commission parrain %</label><input type="number" value={f.commission_parrain} onChange={e=>setF({...f,commission_parrain:+e.target.value})} /></div>
+          <div className="form-group"><label>ID boutique</label><input value={f.identifiant_boutique} onChange={e=>setF({...f,identifiant_boutique:e.target.value})} /></div>
+        </div>
+        <div className="form-group" style={{marginBottom:16}}><label>MDP boutique</label><input type="password" value={f.mdp_boutique} onChange={e=>setF({...f,mdp_boutique:e.target.value})} /></div>
+        <button className="btn btn-primary" onClick={add}>✅ Ajouter</button>
+      </Modal>}
+    </div>
+  );
+}
+
+// ━━━ PROFIL ━━━
+function Profil({ aid, toast }) {
+  const [data, setData] = useState(null);
+  const [noteText, setNoteText] = useState('');
+  const load = () => api(`/api/acheteurs/${aid}`).then(setData);
+  useEffect(() => { load(); }, [aid]);
+  if (!data) return <div className="empty">Chargement...</div>;
+  const { acheteur: a, commandes: cmds, notes } = data;
+  const total = cmds.reduce((s,c) => s+c.montant_total, 0);
+  const addNote = async () => {
+    if (!noteText.trim()) return;
+    await api(`/api/acheteurs/${aid}/notes`, { method:'POST', body:{ contenu:noteText } });
+    setNoteText(''); load();
+  };
+  return (
+    <div>
+      <div className="profil-header">
+        <h3>👤 {a.nom}</h3>
+        <p>📅 Inscrit le {a.date_creation?.slice(0,10)}</p>
+        <div className="profil-badge">{a.parrain !== 'Aucun' ? `Parrain : ${a.parrain} (${a.commission_parrain}%)` : 'Pas de parrain'}</div>
+      </div>
+      {(a.identifiant_boutique || a.mdp_boutique) && <>
+        <h3 className="section-title">🔐 Accès Boutique</h3>
+        <div className="cred-box">Identifiant : {a.identifiant_boutique || '—'}{'\n'}Mot de passe : {a.mdp_boutique || '—'}</div>
+      </>}
+      <div className="kpi-grid">
+        <div className="kpi"><div className="label">Commandes</div><div className="value">{cmds.length}</div></div>
+        <div className="kpi"><div className="label">Total</div><div className="value">{fmt(total)} €</div></div>
+      </div>
+      {cmds.length > 0 && <div className="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th></tr></thead>
+        <tbody>{cmds.map(c => <tr key={c.id}><td>{c.date?.slice(0,10)}</td><td>{c.boutique}</td><td>{fmt(c.montant_total)} €</td><td>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique && <span className="badge-tech">{c.technique}</span>}</td><td><span className={`badge-status ${statusClass(c.statut)}`}>{c.statut}</span></td></tr>)}</tbody>
+      </table></div>}
+      <h3 className="section-title">💬 Notes</h3>
+      <div style={{display:'flex',gap:8,marginBottom:16}}>
+        <input className="search-input" style={{marginBottom:0}} placeholder="Ajouter une note..." value={noteText} onChange={e=>setNoteText(e.target.value)} />
+        <button className="btn btn-primary" onClick={addNote}>💬</button>
+      </div>
+      {notes.map(n => <div className="note-item" key={n.id}><div className="note-meta">{n.auteur} — {n.date_creation}</div>{n.contenu}</div>)}
+    </div>
+  );
+}
+
+// ━━━ COMMANDES ━━━
+function Commandes({ toast }) {
+  const [cmds, setCmds] = useState([]);
+  const [show, setShow] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [f, setF] = useState({ acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',technique:'' });
+  const load = () => api('/api/commandes').then(setCmds);
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (editId) {
+      await api(`/api/commandes/${editId}`, { method:'PUT', body:{
+        boutique:f.boutique,montant_total:f.montant_total,commission_mode:f.commission_mode,
+        commission_pct:f.commission_pct,commission_eur:f.commission_eur,notes:f.notes,statut:f.statut,technique:f.technique
+      }});
+      toast('Modifiée !');
+    } else {
+      await api('/api/commandes', { method:'POST', body:f });
+      toast('Commande créée !');
+    }
+    setShow(false); setEditId(null); load();
+    setF({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',technique:''});
+  };
+
+  const edit = (c) => {
+    setEditId(c.id);
+    setF({acheteur_nom:c.acheteur,boutique:c.boutique,montant_total:c.montant_total,commission_mode:c.commission_mode,
+      commission_pct:c.commission_vendeur_pct,commission_eur:c.commission_vendeur_eur,notes:c.notes,statut:c.statut,technique:c.technique||''});
+    setShow(true);
+  };
+
+  return (
+    <div>
+      <div className="flex-between">
+        <h1 className="page-title">📋 Commandes</h1>
+        <button className="btn btn-primary" onClick={()=>{setEditId(null);setF({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',technique:''});setShow(true)}}>➕ Nouvelle</button>
+      </div>
+      <div className="table-wrap"><table>
+        <thead><tr><th>ID</th><th>Date</th><th>Acheteur</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Coût</th><th>Statut</th><th></th></tr></thead>
+        <tbody>{cmds.map(c => <tr key={c.id}>
+          <td>{c.id}</td><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td>
+          <td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td>
+          <td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td>
+          <td>{c.technique && <span className="badge-tech">{c.technique}</span>}</td>
+          <td style={{fontFamily:'var(--mono)'}}>{fmt(c.cout_total)} €</td>
+          <td><span className={`badge-status ${statusClass(c.statut)}`}>{c.statut}</span></td>
+          <td style={{display:'flex',gap:4}}>
+            <button className="btn btn-ghost btn-sm" onClick={()=>edit(c)}>✏️</button>
+            <button className="btn btn-danger btn-sm" onClick={()=>{api(`/api/commandes/${c.id}`,{method:'DELETE'}).then(load)}}>🗑️</button>
+          </td>
+        </tr>)}</tbody>
+      </table></div>
+      {show && <Modal onClose={()=>setShow(false)}>
+        <h3>{editId ? `Modifier #${editId}` : 'Nouvelle commande'}</h3>
+        <div className="form-row">
+          {!editId && <div className="form-group"><label>Acheteur</label><input value={f.acheteur_nom} onChange={e=>setF({...f,acheteur_nom:e.target.value})} placeholder="Créé auto si nouveau" /></div>}
+          <div className="form-group"><label>Boutique</label><input value={f.boutique} onChange={e=>setF({...f,boutique:e.target.value})} /></div>
+          <div className="form-group"><label>Montant (€)</label><input type="number" step="0.5" value={f.montant_total} onChange={e=>setF({...f,montant_total:+e.target.value})} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Type commission</label><select value={f.commission_mode} onChange={e=>setF({...f,commission_mode:e.target.value})}><option value="pct">En %</option><option value="fixe">Fixe €</option></select></div>
+          <div className="form-group"><label>{f.commission_mode==='pct'?'Commission %':'Commission €'}</label><input type="number" step="0.5" value={f.commission_mode==='pct'?f.commission_pct:f.commission_eur} onChange={e=>{const v=+e.target.value;setF({...f,...(f.commission_mode==='pct'?{commission_pct:v}:{commission_eur:v})})}}/></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Technique</label><select value={f.technique} onChange={e=>setF({...f,technique:e.target.value})}><option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+          <div className="form-group"><label>Statut</label><select value={f.statut} onChange={e=>setF({...f,statut:e.target.value})}><option>En cours</option><option>Validée</option><option>Livrée</option><option>Annulée</option></select></div>
+        </div>
+        <div className="form-group" style={{marginBottom:16}}><label>Notes</label><input value={f.notes} onChange={e=>setF({...f,notes:e.target.value})} /></div>
+        <button className="btn btn-primary" onClick={save}>✅ {editId ? 'Sauvegarder' : 'Créer'}</button>
+      </Modal>}
+    </div>
+  );
+}
+
+// ━━━ COMMISSIONS ━━━
+function Commissions() {
+  const [data, setData] = useState(null);
+  const [tab, setTab] = useState('parrains');
+  useEffect(() => { api('/api/commissions').then(setData); }, []);
+  if (!data) return <div className="empty">Chargement...</div>;
+  return (
+    <div>
+      <h1 className="page-title">💵 Commissions</h1>
+      <div className="tabs">
+        <button className={tab==='parrains'?'active':''} onClick={()=>setTab('parrains')}>🤝 Parrains</button>
+        <button className={tab==='boutiques'?'active':''} onClick={()=>setTab('boutiques')}>📊 Boutiques</button>
+      </div>
+      {tab === 'parrains' && (data.parrains.length === 0 ? <div className="empty">Aucun parrainage</div> :
+        <div className="table-wrap"><table>
+          <thead><tr><th>Parrain</th><th>Filleuls</th><th>Commandes</th><th>CA</th><th>Commissions</th></tr></thead>
+          <tbody>{data.parrains.map(p => <tr key={p.parrain}><td style={{fontWeight:600}}>{p.parrain}</td><td>{p.filleuls}</td><td>{p.commandes}</td><td>{fmt(p.ca)} €</td><td style={{color:'var(--accent)',fontFamily:'var(--mono)',fontWeight:600}}>{fmt(p.commissions)} €</td></tr>)}</tbody>
+        </table></div>
+      )}
+      {tab === 'boutiques' && <div className="table-wrap"><table>
+        <thead><tr><th>Boutique</th><th>Commandes</th><th>CA</th><th>Commission</th><th>Coûts</th><th>Profit</th></tr></thead>
+        <tbody>{data.boutiques.map(b => <tr key={b.boutique}><td style={{fontWeight:600}}>{b.boutique}</td><td>{b.commandes}</td><td>{fmt(b.ca)} €</td><td>{fmt(b.commission)} €</td><td>{fmt(b.couts)} €</td><td style={{color:b.commission-b.couts>=0?'var(--green)':'var(--red)',fontFamily:'var(--mono)',fontWeight:600}}>{fmt(b.commission-b.couts)} €</td></tr>)}</tbody>
+      </table></div>}
+    </div>
+  );
+}
+
+// ━━━ RECHERCHE ━━━
+function Recherche({ onSelectAcheteur }) {
+  const [q, setQ] = useState('');
+  const [res, setRes] = useState([]);
+  useEffect(() => { if (q.length >= 2) api(`/api/search?q=${q}`).then(setRes); else setRes([]); }, [q]);
+  return (
+    <div>
+      <h1 className="page-title">🔍 Recherche</h1>
+      <input className="search-input" placeholder="Nom, boutique..." value={q} onChange={e=>setQ(e.target.value)} autoFocus />
+      {res.map((r,i) => <div key={i} style={{padding:'12px 16px',borderBottom:'1px solid var(--bg3)',cursor:'pointer'}} onClick={()=>r.type==='acheteur'&&onSelectAcheteur(r.id)}>
+        <span style={{color:'var(--text3)',fontSize:'0.75rem',marginRight:8}}>{r.type==='acheteur'?'👤':'📦'}</span>
+        <b>{r.titre}</b> {r.detail && <span style={{color:'var(--text3)'}}> — {r.detail}</span>}
+      </div>)}
+    </div>
+  );
+}
+
+// ━━━ PARAMETRES ━━━
+function Parametres({ toast, username }) {
+  const [op, setOp] = useState('');
+  const [np, setNp] = useState('');
+  const [np2, setNp2] = useState('');
+  const save = async () => {
+    if (np !== np2) return toast('Pas identiques');
+    try { await api('/api/change-password', { method:'POST', body:{ username, old_password:op, new_password:np } }); toast('Mot de passe modifié !'); }
+    catch { toast('Erreur'); }
+  };
+  return (
+    <div>
+      <h1 className="page-title">⚙️ Paramètres</h1>
+      <div className="form-card">
+        <h3 className="section-title">🔐 Mot de passe</h3>
+        <div className="form-group" style={{marginBottom:12}}><label>Actuel</label><input type="password" value={op} onChange={e=>setOp(e.target.value)} /></div>
+        <div className="form-row">
+          <div className="form-group"><label>Nouveau</label><input type="password" value={np} onChange={e=>setNp(e.target.value)} /></div>
+          <div className="form-group"><label>Confirmer</label><input type="password" value={np2} onChange={e=>setNp2(e.target.value)} /></div>
+        </div>
+        <button className="btn btn-primary" onClick={save}>🔐 Modifier</button>
+      </div>
+      <div className="form-card"><p style={{color:'var(--text3)'}}>⚡ SalesFlow v7 — React + FastAPI + Turso Cloud</p></div>
+    </div>
+  );
+}
+
+// ━━━ APP ━━━
+function App() {
+  const [user, setUser] = useState(localStorage.getItem('username'));
+  const [page, setPage] = useState('dashboard');
+  const [profilId, setProfilId] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const [pending, setPending] = useState(0);
+
+  useEffect(() => { if (user) api('/api/dashboard').then(d => setPending(d.pending)).catch(()=>{}); }, [user, page]);
+
+  const toast = (msg) => setToastMsg(msg);
+  const nav = (p, id) => { setPage(p); if (id) setProfilId(id); };
+  const logout = () => { localStorage.clear(); setUser(null); };
+
+  if (!user) return <LoginPage onLogin={setUser} />;
+
+  const menuItems = [
+    { key:'dashboard', icon:'📊', label:'Dashboard' },
+    { key:'demandes', icon:'📩', label:'Demandes', badge: pending },
+    { key:'couts', icon:'💰', label:'Coûts' },
+    { key:'recherche', icon:'🔍', label:'Recherche' },
+    { key:'acheteurs', icon:'👤', label:'Acheteurs' },
+    { key:'commandes', icon:'📋', label:'Commandes' },
+    { key:'commissions', icon:'💵', label:'Commissions' },
+    { key:'parametres', icon:'⚙️', label:'Paramètres' },
+  ];
+
+  return (
+    <div className="app">
+      <div className="sidebar">
+        <div className="logo">⚡ Sales<span>Flow</span></div>
+        <div className="user">{user}</div>
+        <nav>
+          {menuItems.map(m => (
+            <button key={m.key} className={page===m.key?'active':''} onClick={()=>nav(m.key)}>
+              <span>{m.icon}</span> <span>{m.label}</span>
+              {m.badge > 0 && <span className="badge">{m.badge}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="bottom"><button onClick={logout}>🚪 Déconnexion</button></div>
+      </div>
+      <div className="main">
+        {page === 'dashboard' && <Dashboard onNav={nav} />}
+        {page === 'demandes' && <Demandes toast={toast} />}
+        {page === 'couts' && <Couts toast={toast} />}
+        {page === 'recherche' && <Recherche onSelectAcheteur={(id)=>{setProfilId(id);setPage('profil')}} />}
+        {page === 'acheteurs' && <Acheteurs toast={toast} onSelect={(id)=>{setProfilId(id);setPage('profil')}} />}
+        {page === 'profil' && profilId && <Profil aid={profilId} toast={toast} />}
+        {page === 'commandes' && <Commandes toast={toast} />}
+        {page === 'commissions' && <Commissions />}
+        {page === 'parametres' && <Parametres toast={toast} username={user} />}
+      </div>
+      {toastMsg && <Toast msg={toastMsg} onClose={()=>setToastMsg('')} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
