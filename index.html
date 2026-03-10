@@ -10,368 +10,262 @@
 <link href="https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--bg:#09090b;--bg2:#18181b;--bg3:#27272a;--bg4:#3f3f46;--text:#fafafa;--text2:#a1a1aa;--text3:#71717a;--accent:#8b5cf6;--accent2:#7c3aed;--accent-glow:rgba(139,92,246,0.15);--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--radius:12px;--font:'Satoshi',sans-serif;--mono:'JetBrains Mono',monospace;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
-input,select,textarea,button{font-family:var(--font);}
-::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+body{font-family:'Satoshi',sans-serif;min-height:100vh;transition:background .3s,color .3s;}
+input,select,textarea,button{font-family:'Satoshi',sans-serif;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{border-radius:3px;}
+
+/* DARK THEME */
+body.dark{--bg:#09090b;--bg2:#18181b;--bg3:#27272a;--bg4:#3f3f46;--text:#fafafa;--text2:#a1a1aa;--text3:#71717a;--accent:#8b5cf6;--accent2:#7c3aed;--accent-glow:rgba(139,92,246,0.15);--green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;--sidebar-bg:#18181b;--sidebar-border:#27272a;background:var(--bg);color:var(--text);}
+body.dark ::-webkit-scrollbar-thumb{background:#3f3f46;}
+
+/* LIGHT THEME */
+body.light{--bg:#f8fafc;--bg2:#ffffff;--bg3:#e2e8f0;--bg4:#cbd5e1;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--accent:#7c3aed;--accent2:#6d28d9;--accent-glow:rgba(124,58,237,0.1);--green:#16a34a;--red:#dc2626;--amber:#d97706;--blue:#2563eb;--sidebar-bg:#0f172a;--sidebar-border:#1e293b;background:var(--bg);color:var(--text);}
+body.light ::-webkit-scrollbar-thumb{background:#cbd5e1;}
+body.light .sidebar *{color:#e2e8f0 !important;}
+
 .app{display:flex;min-height:100vh;}
-.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--bg3);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;padding:20px 12px;}
-.sidebar .logo{font-size:1.2rem;font-weight:800;padding:0 8px;margin-bottom:4px;}.sidebar .logo span{color:var(--accent);}
-.sidebar .user{font-size:0.75rem;color:var(--text3);padding:0 8px;margin-bottom:20px;}
-.sidebar .sl{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-weight:700;padding:12px 8px 6px;margin-top:4px;}
+.sidebar{width:220px;background:var(--sidebar-bg);border-right:1px solid var(--sidebar-border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;padding:20px 12px;}
+.sidebar .logo{font-size:1.2rem;font-weight:800;padding:0 8px;margin-bottom:4px;color:#e2e8f0;}.sidebar .logo span{color:var(--accent);}
+.sidebar .user{font-size:0.75rem;color:#94a3b8;padding:0 8px;margin-bottom:20px;}
+.sidebar .sl{font-size:0.65rem;color:#64748b;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;padding:12px 8px 6px;}
 .sidebar nav{flex:1;display:flex;flex-direction:column;gap:1px;}
-.sidebar nav button{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;color:var(--text2);font-size:0.84rem;font-weight:500;border-radius:8px;cursor:pointer;transition:all .12s;text-align:left;width:100%;}
-.sidebar nav button:hover{background:var(--bg3);color:var(--text);}
+.sidebar nav button{display:flex;align-items:center;gap:10px;padding:9px 12px;border:none;background:none;color:#94a3b8;font-size:0.84rem;font-weight:500;border-radius:8px;cursor:pointer;transition:all .12s;text-align:left;width:100%;}
+.sidebar nav button:hover{background:rgba(255,255,255,0.06);color:#e2e8f0;}
 .sidebar nav button.active{background:var(--accent-glow);color:var(--accent);font-weight:600;}
 .sidebar nav button .badge{margin-left:auto;background:var(--red);color:white;font-size:0.65rem;font-weight:700;padding:2px 6px;border-radius:8px;}
-.sidebar .bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--bg3);}
-.sidebar .bottom button{width:100%;padding:7px;border:1px solid var(--bg4);background:none;color:var(--text3);border-radius:8px;cursor:pointer;font-size:0.78rem;}
+.sidebar .bottom{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);}
+.sidebar .bottom button{width:100%;padding:7px;border:1px solid rgba(255,255,255,0.1);background:none;color:#94a3b8;border-radius:8px;cursor:pointer;font-size:0.78rem;}
 .sidebar .bottom button:hover{border-color:var(--red);color:var(--red);}
 .main{margin-left:220px;flex:1;min-height:100vh;}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--bg3);position:sticky;top:0;background:var(--bg);z-index:50;}
-.topbar h1{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+.topbar h1{font-size:1.15rem;font-weight:700;gap:8px;display:flex;align-items:center;}
 .topbar-actions{display:flex;align-items:center;gap:6px;}
 .search-btn{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:6px 10px;color:var(--text3);cursor:pointer;font-size:0.82rem;}
 .search-btn:hover{border-color:var(--bg4);color:var(--text2);}
 .content{padding:20px 28px;}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px;}
-.kpi{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:14px 16px;}
+.kpi{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:14px 16px;}
 .kpi .label{font-size:0.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;font-weight:600;margin-bottom:3px;}
-.kpi .value{font-size:1.3rem;font-weight:700;font-family:var(--mono);}
+.kpi .value{font-size:1.3rem;font-weight:700;font-family:'JetBrains Mono',monospace;}
 .kpi .value.green{color:var(--green);}.kpi .value.amber{color:var(--amber);}.kpi .value.red{color:var(--red);}.kpi .value.accent{color:var(--accent);}
-.tbl{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;}
+.tbl{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;overflow:hidden;margin-bottom:18px;}
 .tbl table{width:100%;border-collapse:collapse;}
 .tbl th{background:var(--bg3);padding:9px 12px;text-align:left;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);font-weight:600;}
 .tbl td{padding:9px 12px;border-top:1px solid var(--bg3);font-size:0.82rem;color:var(--text2);}
-.tbl tr:hover td{background:rgba(255,255,255,0.015);}
-.bs{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.68rem;font-weight:600;cursor:pointer;transition:all .12s;user-select:none;}
+.tbl tr:hover td{background:rgba(139,92,246,0.02);}
+.bs{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.68rem;font-weight:600;cursor:default;user-select:none;}
 .bs.en-cours{background:rgba(251,191,36,0.1);color:var(--amber);}
 .bs.validee{background:rgba(59,130,246,0.1);color:var(--blue);}
 .bs.payee{background:rgba(34,197,94,0.1);color:var(--green);}
 .bs.annulee{background:rgba(239,68,68,0.1);color:var(--red);}
 .bs.non-payee{background:rgba(251,191,36,0.1);color:var(--amber);}
-.bs.payee-click:hover{box-shadow:0 0 0 2px var(--green);cursor:pointer;}
-.bs.non-payee-click:hover{box-shadow:0 0 0 2px var(--amber);cursor:pointer;}
+.bs.clickable{cursor:pointer;transition:box-shadow .12s;}.bs.clickable:hover{box-shadow:0 0 0 2px currentColor;}
 .bt{display:inline-block;padding:2px 7px;border-radius:5px;font-size:0.66rem;font-weight:600;background:var(--accent-glow);color:var(--accent);}
-.card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
+.card{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:20px;margin-bottom:14px;}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;}
 .fg label{font-size:0.68rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
-.fg input,.fg select,.fg textarea{background:var(--bg);border:1px solid var(--bg4);border-radius:8px;padding:7px 10px;color:var(--text);font-size:0.84rem;outline:none;}
+.fg input,.fg select,.fg textarea{background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:7px 10px;color:var(--text);font-size:0.84rem;outline:none;}
 .fg input:focus,.fg select:focus{border-color:var(--accent);}
 .btn{padding:7px 14px;border:none;border-radius:8px;font-size:0.8rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .12s;}
 .btn-p{background:var(--accent);color:white;}.btn-p:hover{background:var(--accent2);}
 .btn-d{background:rgba(239,68,68,0.1);color:var(--red);}.btn-d:hover{background:rgba(239,68,68,0.18);}
-.btn-g{background:none;color:var(--text2);border:1px solid var(--bg4);}.btn-g:hover{border-color:var(--text3);}
+.btn-g{background:none;color:var(--text2);border:1px solid var(--bg3);}.btn-g:hover{border-color:var(--text3);}
 .btn-sm{padding:4px 8px;font-size:0.72rem;}
-.profil-h{background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:var(--radius);padding:24px;margin-bottom:18px;position:relative;}
-.profil-h h3{font-size:1.2rem;font-weight:700;margin-bottom:5px;}.profil-h p{color:#c7d2fe;font-size:0.82rem;margin:2px 0;}
+.profil-h{background:linear-gradient(135deg,#1e1b4b,#312e81);border-radius:12px;padding:24px;margin-bottom:18px;position:relative;color:white;}
+.profil-h h3{font-size:1.2rem;font-weight:700;margin-bottom:5px;color:white;}.profil-h p{color:#c7d2fe;font-size:0.82rem;}
 .profil-badge{display:inline-block;background:rgba(139,92,246,0.2);color:#a5b4fc;padding:3px 10px;border-radius:14px;font-size:0.72rem;font-weight:600;margin-top:6px;}
-.profil-edit{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.1);border:none;color:white;border-radius:8px;padding:6px 8px;cursor:pointer;font-size:0.9rem;}
-.profil-edit:hover{background:rgba(255,255,255,0.2);}
-.cred-box{background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:12px;font-family:var(--mono);font-size:0.8rem;color:var(--text2);white-space:pre-wrap;margin-bottom:14px;}
-.note-item{background:var(--bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px;margin:5px 0;font-size:0.84rem;}
+.profil-edit{position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.1);border:none;color:white;border-radius:8px;padding:5px 7px;cursor:pointer;font-size:0.85rem;}.profil-edit:hover{background:rgba(255,255,255,0.2);}
+.cred-box{background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text2);white-space:pre-wrap;margin-bottom:14px;}
+.note-item{background:var(--bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px;margin:5px 0;font-size:0.84rem;color:var(--text2);}
 .note-item .nm{font-size:0.66rem;color:var(--text3);margin-bottom:2px;}
-.pending-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:18px;margin-bottom:10px;}
-.pending-card h4{font-size:0.9rem;font-weight:700;margin-bottom:5px;}
-.pending-card .meta{font-size:0.8rem;color:var(--text2);margin-bottom:8px;}.pending-card .meta b{color:var(--text);}
+.pending-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:18px;margin-bottom:10px;}
+.pending-card h4{font-size:0.9rem;font-weight:700;margin-bottom:5px;}.pending-card .meta{font-size:0.8rem;color:var(--text2);margin-bottom:8px;}.pending-card .meta b{color:var(--text);}
 .cost-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:5px;}
-.cost-item .name{font-weight:600;color:var(--accent);}.cost-item .price{font-family:var(--mono);font-weight:600;}
+.cost-item .name{font-weight:600;color:var(--accent);}.cost-item .price{font-family:'JetBrains Mono',monospace;font-weight:600;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;display:flex;align-items:center;justify-content:center;}
 .modal{background:var(--bg2);border:1px solid var(--bg3);border-radius:14px;padding:24px;width:500px;max-height:82vh;overflow-y:auto;}
 .modal h3{font-size:1rem;font-weight:700;margin-bottom:14px;}
 .search-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;justify-content:center;padding-top:100px;}
 .search-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:14px;width:440px;max-height:360px;overflow:hidden;display:flex;flex-direction:column;}
 .search-box input{background:none;border:none;padding:14px 18px;color:var(--text);font-size:0.95rem;outline:none;border-bottom:1px solid var(--bg3);}
-.search-box .results{overflow-y:auto;}
-.search-box .result{padding:9px 18px;cursor:pointer;font-size:0.82rem;border-bottom:1px solid var(--bg3);color:var(--text2);}
-.search-box .result:hover{background:var(--bg3);}.search-box .result b{color:var(--text);}
+.search-box .results{overflow-y:auto;}.search-box .result{padding:9px 18px;cursor:pointer;font-size:0.82rem;border-bottom:1px solid var(--bg3);color:var(--text2);}.search-box .result:hover{background:var(--bg3);}.search-box .result b{color:var(--text);}
 .toast{position:fixed;bottom:18px;right:18px;background:var(--green);color:white;padding:9px 16px;border-radius:8px;font-weight:600;font-size:0.82rem;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;animation:si .2s;}
 @keyframes si{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
 .login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;}
 .login-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:14px;padding:36px;width:340px;text-align:center;}
 .login-card h1{font-size:1.5rem;font-weight:800;margin-bottom:2px;}.login-card h1 span{color:var(--accent);}
-.login-card .sub{color:var(--text3);font-size:0.8rem;margin-bottom:20px;}.login-card .fg{text-align:left;}
-.login-card .btn{width:100%;justify-content:center;margin-top:4px;}.login-card .hint{font-size:0.7rem;color:var(--text3);margin-top:10px;}
+.login-card .sub{color:var(--text3);font-size:0.8rem;margin-bottom:20px;}.login-card .fg{text-align:left;}.login-card .btn{width:100%;justify-content:center;margin-top:4px;}.login-card .hint{font-size:0.7rem;color:var(--text3);margin-top:10px;}
 .empty{text-align:center;padding:28px;color:var(--text3);font-size:0.82rem;}
 .divider{border:none;border-top:1px solid var(--bg3);margin:16px 0;}
 .st{font-size:0.9rem;font-weight:700;margin-bottom:10px;}
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--bg3);border-radius:8px;padding:2px;}
-.tabs button{flex:1;padding:6px 10px;border:none;background:none;color:var(--text3);font-weight:600;border-radius:6px;cursor:pointer;font-size:0.78rem;}
-.tabs button.active{background:var(--bg2);color:var(--text);}
-.filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.tabs button{flex:1;padding:6px 10px;border:none;background:none;color:var(--text3);font-weight:600;border-radius:6px;cursor:pointer;font-size:0.78rem;}.tabs button.active{background:var(--bg2);color:var(--text);}
+.filters{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
 .filters select{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:5px 8px;color:var(--text2);font-size:0.78rem;}
 .warn{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.15);border-radius:8px;padding:9px 12px;margin-bottom:14px;color:var(--amber);font-weight:600;font-size:0.82rem;}
+.theme-toggle{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--bg3);border-radius:8px;padding:8px 14px;cursor:pointer;margin-bottom:12px;color:var(--text2);font-size:0.84rem;font-weight:500;}
+.theme-toggle:hover{border-color:var(--accent);}
+.parrain-card{background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:18px;margin-bottom:10px;}
+.parrain-card h4{font-size:0.9rem;font-weight:700;margin-bottom:4px;color:var(--text);}
+.parrain-card .stats{display:flex;gap:16px;font-size:0.8rem;color:var(--text2);margin-bottom:8px;}
+.parrain-card .stats b{color:var(--text);}
+.trans-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bg3);font-size:0.8rem;}
 </style>
 </head>
-<body>
+<body class="dark">
 <div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useCallback}=React;
+const{useState,useEffect}=React;
 const API='https://salesflow-api-production.up.railway.app';
 const TECHNIQUES=["FTID","LIT","RTS","DNA","EB"];
 const fmt=n=>new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n||0);
 const sc=s=>s==='En cours'?'en-cours':s==='Validée'?'validee':s==='Payée'?'payee':'annulee';
 const pc=p=>p==='Payée'?'payee':'non-payee';
 
-async function $api(path,opts={}){
-  const token=localStorage.getItem('token');
-  const res=await fetch(`${API}${path}`,{...opts,headers:{'Content-Type':'application/json',...(token&&{Authorization:`Bearer ${token}`})},body:opts.body?JSON.stringify(opts.body):undefined});
-  if(!res.ok)throw new Error(await res.text());return res.json();
-}
-
+async function $api(path,opts={}){const token=localStorage.getItem('token');const res=await fetch(`${API}${path}`,{...opts,headers:{'Content-Type':'application/json',...(token&&{Authorization:`Bearer ${token}`})},body:opts.body?JSON.stringify(opts.body):undefined});if(!res.ok)throw new Error(await res.text());return res.json();}
 function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,2500);return()=>clearTimeout(t)},[]);return<div className="toast">{msg}</div>}
 function Modal({children,onClose}){return<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>{children}</div></div>}
+function Login({onLogin}){const[u,setU]=useState('');const[p,setP]=useState('');const[err,setErr]=useState('');const go=async e=>{e.preventDefault();try{const d=await $api('/api/login',{method:'POST',body:{username:u,password:p}});localStorage.setItem('token',d.token);localStorage.setItem('username',d.username);onLogin(d.username)}catch{setErr('Identifiants incorrects')}};return<div className="login-page"><form className="login-card" onSubmit={go}><h1>⚡ Sales<span>Flow</span></h1><p className="sub">Gestion des Ventes</p><div className="fg"><label>Identifiant</label><input value={u} onChange={e=>setU(e.target.value)}/></div><div className="fg"><label>Mot de passe</label><input type="password" value={p} onChange={e=>setP(e.target.value)}/></div>{err&&<p style={{color:'var(--red)',fontSize:'.8rem',margin:'4px 0'}}>{err}</p>}<button className="btn btn-p" type="submit">Se connecter</button><p className="hint">admin / admin</p></form></div>}
+function SearchOverlay({onClose,onSelect}){const[q,setQ]=useState('');const[res,setRes]=useState([]);useEffect(()=>{if(q.length>=2)$api(`/api/search?q=${q}`).then(setRes);else setRes([])},[q]);return<div className="search-overlay" onClick={onClose}><div className="search-box" onClick={e=>e.stopPropagation()}><input placeholder="Rechercher..." value={q} onChange={e=>setQ(e.target.value)} autoFocus/><div className="results">{res.map((r,i)=><div key={i} className="result" onClick={()=>{onSelect(r);onClose()}}>{r.type==='acheteur'?'👤':'📦'} <b>{r.titre}</b> {r.detail&&`— ${r.detail}`}</div>)}</div></div></div>}
 
-function Login({onLogin}){
-  const[u,setU]=useState('');const[p,setP]=useState('');const[err,setErr]=useState('');
-  const go=async e=>{e.preventDefault();try{const d=await $api('/api/login',{method:'POST',body:{username:u,password:p}});localStorage.setItem('token',d.token);localStorage.setItem('username',d.username);onLogin(d.username)}catch{setErr('Identifiants incorrects')}};
-  return<div className="login-page"><form className="login-card" onSubmit={go}><h1>⚡ Sales<span>Flow</span></h1><p className="sub">Gestion des Ventes</p><div className="fg"><label>Identifiant</label><input value={u} onChange={e=>setU(e.target.value)}/></div><div className="fg"><label>Mot de passe</label><input type="password" value={p} onChange={e=>setP(e.target.value)}/></div>{err&&<p style={{color:'var(--red)',fontSize:'.8rem',margin:'4px 0'}}>{err}</p>}<button className="btn btn-p" type="submit">Se connecter</button><p className="hint">admin / admin</p></form></div>
-}
-
-function SearchOverlay({onClose,onSelect}){
-  const[q,setQ]=useState('');const[res,setRes]=useState([]);
-  useEffect(()=>{if(q.length>=2)$api(`/api/search?q=${q}`).then(setRes);else setRes([])},[q]);
-  return<div className="search-overlay" onClick={onClose}><div className="search-box" onClick={e=>e.stopPropagation()}><input placeholder="Rechercher..." value={q} onChange={e=>setQ(e.target.value)} autoFocus/><div className="results">{res.map((r,i)=><div key={i} className="result" onClick={()=>{onSelect(r);onClose()}}>{r.type==='acheteur'?'👤':'📦'} <b>{r.titre}</b> {r.detail&&`— ${r.detail}`}</div>)}</div></div></div>
-}
-
-// ━━━ DASHBOARD ━━━
-function Dashboard(){
-  const[d,setD]=useState(null);
-  useEffect(()=>{$api('/api/dashboard').then(setD)},[]);
-  if(!d)return<div className="empty">Chargement...</div>;
-  return<div>
-    {d.pending>0&&<div className="warn">📩 {d.pending} demande(s) en attente</div>}
-    <div className="kpi-grid">
-      <div className="kpi"><div className="label">Clients</div><div className="value">{d.acheteurs}</div></div>
-      <div className="kpi"><div className="label">Commandes</div><div className="value">{d.commandes}</div></div>
-      <div className="kpi"><div className="label">CA Total</div><div className="value">{fmt(d.ca)} €</div></div>
-      <div className="kpi"><div className="label">Coûts</div><div className="value red">{fmt(d.couts)} €</div></div>
-      <div className="kpi"><div className="label">En attente paiement</div><div className="value amber">{fmt(d.a_venir)} €</div></div>
-      <div className="kpi"><div className="label">Bénéfice</div><div className="value green">{fmt(d.benefice)} €</div></div>
-    </div>
-    <div className="st">Dernières commandes</div>
-    <div className="tbl"><table><thead><tr><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th><th>Paiement</th></tr></thead>
-    <tbody>{d.recent.map(c=><tr key={c.id}><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td><td><span className={`bs ${pc(c.paiement)}`}>{c.paiement||'Non payée'}</span></td></tr>)}</tbody></table></div>
+function Dashboard(){const[d,setD]=useState(null);useEffect(()=>{$api('/api/dashboard').then(setD)},[]);if(!d)return<div className="empty">Chargement...</div>;return<div>
+  {d.pending>0&&<div className="warn">📩 {d.pending} demande(s) en attente</div>}
+  <div className="kpi-grid">
+    <div className="kpi"><div className="label">Clients</div><div className="value">{d.clients}</div></div>
+    <div className="kpi"><div className="label">Commandes</div><div className="value">{d.commandes}</div></div>
+    <div className="kpi"><div className="label">Commissions en cours</div><div className="value accent">{fmt(d.comm_en_cours)} €</div></div>
+    <div className="kpi"><div className="label">En attente paiement</div><div className="value amber">{fmt(d.en_attente_paiement)} €</div></div>
+    <div className="kpi"><div className="label">Bénéfice</div><div className="value green">{fmt(d.benefice)} €</div></div>
   </div>
-}
+  <div className="st">Dernières commandes</div>
+  <div className="tbl"><table><thead><tr><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th><th>Paiement</th></tr></thead>
+  <tbody>{d.recent.map(c=><tr key={c.id}><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td><td><span className={`bs ${pc(c.paiement)}`}>{c.paiement||'Non payée'}</span></td></tr>)}</tbody></table></div>
+</div>}
 
-// ━━━ DEMANDES ━━━
-function Demandes({toast}){
-  const[dems,setDems]=useState([]);const[tab,setTab]=useState('att');const[clients,setClients]=useState([]);
-  const load=()=>{$api('/api/demandes').then(setDems);$api('/api/acheteurs').then(setClients)};useEffect(()=>{load()},[]);
-  const att=dems.filter(d=>d.statut==='En attente'),hist=dems.filter(d=>d.statut!=='En attente');
-  const[vf,setVf]=useState({});const upd=(id,k,v)=>setVf(p=>({...p,[id]:{...p[id],[k]:v}}));
-  const valider=async id=>{const f=vf[id]||{};await $api(`/api/demandes/${id}/valider`,{method:'POST',body:{commission_mode:f.mode||'pct',commission_pct:f.pct||0,commission_eur:f.eur||0,technique:f.technique||'',notes_admin:f.notes||'',client_id:f.client_id||null}});toast('Validée !');load()};
-  const rejeter=async id=>{await $api(`/api/demandes/${id}/rejeter`,{method:'POST'});load()};
+function Demandes({toast}){const[dems,setDems]=useState([]);const[tab,setTab]=useState('att');const[clients,setClients]=useState([]);const load=()=>{$api('/api/demandes').then(setDems);$api('/api/acheteurs').then(setClients)};useEffect(()=>{load()},[]);const att=dems.filter(d=>d.statut==='En attente'),hist=dems.filter(d=>d.statut!=='En attente');const[vf,setVf]=useState({});const upd=(id,k,v)=>setVf(p=>({...p,[id]:{...p[id],[k]:v}}));const valider=async id=>{const f=vf[id]||{};await $api(`/api/demandes/${id}/valider`,{method:'POST',body:{commission_mode:f.mode||'pct',commission_pct:f.pct||0,commission_eur:f.eur||0,technique:f.technique||'',notes_admin:f.notes||'',client_id:f.client_id||null}});toast('Validée !');load()};const rejeter=async id=>{await $api(`/api/demandes/${id}/rejeter`,{method:'POST'});load()};
+return<div><div className="tabs"><button className={tab==='att'?'active':''} onClick={()=>setTab('att')}>En attente ({att.length})</button><button className={tab==='hist'?'active':''} onClick={()=>setTab('hist')}>Historique</button></div>
+{tab==='att'&&(att.length===0?<div className="empty">Aucune demande 🎉</div>:att.map(d=><div className="pending-card" key={d.id}><h4>#{d.id} — {d.nom_client}</h4><div className="meta">🛍️ <b>{d.boutique}</b> · 💶 <b>{fmt(d.montant)} €</b> · {d.date_soumission?.slice(0,10)}</div>{d.notes_client&&<p style={{fontSize:'.78rem',color:'var(--text3)',marginBottom:6}}>💬 {d.notes_client}</p>}{(d.identifiant_boutique||d.mdp_boutique)&&<div className="cred-box">ID: {d.identifiant_boutique||'—'}{'\n'}MDP: {d.mdp_boutique||'—'}</div>}
+<div className="row"><div className="fg"><label>Relier à un client</label><select onChange={e=>upd(d.id,'client_id',e.target.value?parseInt(e.target.value):null)}><option value="">Nouveau client</option>{clients.map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}</select></div><div className="fg"><label>Technique</label><select onChange={e=>upd(d.id,'technique',e.target.value)}><option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t} value={t}>{t}</option>)}</select></div></div>
+<div className="row"><div className="fg"><label>Commission</label><select onChange={e=>upd(d.id,'mode',e.target.value)}><option value="pct">En %</option><option value="fixe">Fixe €</option></select></div><div className="fg"><label>{(vf[d.id]?.mode||'pct')==='pct'?'%':'€'}</label><input type="number" step="0.5" onChange={e=>upd(d.id,(vf[d.id]?.mode||'pct')==='pct'?'pct':'eur',+e.target.value)}/></div></div>
+<div className="fg"><label>Notes</label><input onChange={e=>upd(d.id,'notes',e.target.value)}/></div>
+<div style={{display:'flex',gap:6}}><button className="btn btn-p btn-sm" onClick={()=>valider(d.id)}>✅ Valider</button><button className="btn btn-d btn-sm" onClick={()=>rejeter(d.id)}>❌</button></div></div>))}
+{tab==='hist'&&(hist.length===0?<div className="empty">Vide</div>:<div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Statut</th></tr></thead><tbody>{hist.map(d=><tr key={d.id}><td>{d.id}</td><td>{d.date_soumission?.slice(0,10)}</td><td>{d.nom_client}</td><td>{d.boutique}</td><td>{fmt(d.montant)} €</td><td><span className={`bs ${sc(d.statut)}`}>{d.statut}</span></td></tr>)}</tbody></table></div>)}</div>}
+
+function Commandes({toast,showModal}){const[cmds,setCmds]=useState([]);const[show,setShow]=useState(false);const[editId,setEditId]=useState(null);const[f,setF]=useState({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',paiement:'Non payée',technique:''});const[fS,setFS]=useState('');const[fP,setFP]=useState('');const load=()=>$api('/api/commandes').then(setCmds);useEffect(()=>{load()},[]);
+const openNew=()=>{setEditId(null);setF({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',paiement:'Non payée',technique:''});setShow(true)};useEffect(()=>{if(showModal)openNew()},[showModal]);
+const save=async()=>{if(editId){await $api(`/api/commandes/${editId}`,{method:'PUT',body:{boutique:f.boutique,montant_total:f.montant_total,commission_mode:f.commission_mode,commission_pct:f.commission_pct,commission_eur:f.commission_eur,notes:f.notes,statut:f.statut,paiement:f.paiement,technique:f.technique}});toast('Modifiée')}else{if(!f.acheteur_nom.trim()||!f.boutique.trim()||f.montant_total<=0)return;await $api('/api/commandes',{method:'POST',body:f});toast('Créée')}setShow(false);setEditId(null);load()};
+const edit=c=>{setEditId(c.id);setF({acheteur_nom:c.acheteur,boutique:c.boutique,montant_total:c.montant_total,commission_mode:c.commission_mode,commission_pct:c.commission_vendeur_pct,commission_eur:c.commission_vendeur_eur,notes:c.notes,statut:c.statut,paiement:c.paiement||'Non payée',technique:c.technique||''});setShow(true)};
+const togglePay=async cid=>{await $api(`/api/commandes/${cid}/toggle-paiement`,{method:'POST'});load()};
+const filtered=cmds.filter(c=>{if(fS&&c.statut!==fS)return false;if(fP&&(c.paiement||'Non payée')!==fP)return false;return true});
+return<div><div className="filters"><select value={fS} onChange={e=>setFS(e.target.value)}><option value="">Tous statuts</option><option>En cours</option><option>Validée</option><option>Annulée</option></select><select value={fP} onChange={e=>setFP(e.target.value)}><option value="">Tous paiements</option><option>Non payée</option><option>Payée</option></select><button className="btn btn-p btn-sm" onClick={openNew}>➕ Commande</button></div>
+<div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Coût</th><th>Statut</th><th>Paiement</th><th></th></tr></thead>
+<tbody>{filtered.map(c=><tr key={c.id}><td>{c.id}</td><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.cout_total)} €</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td><td><span className={`bs ${pc(c.paiement)} ${c.statut==='Validée'?'clickable':''}`} onClick={()=>c.statut==='Validée'&&togglePay(c.id)}>{c.paiement||'Non payée'}</span></td><td style={{display:'flex',gap:3}}><button className="btn btn-g btn-sm" onClick={()=>edit(c)}>✏️</button><button className="btn btn-d btn-sm" onClick={()=>{$api(`/api/commandes/${c.id}`,{method:'DELETE'}).then(load)}}>🗑️</button></td></tr>)}</tbody></table></div>
+{show&&<Modal onClose={()=>setShow(false)}><h3>{editId?`Modifier #${editId}`:'Nouvelle commande'}</h3>{!editId&&<div className="fg"><label>Client</label><input value={f.acheteur_nom} onChange={e=>setF({...f,acheteur_nom:e.target.value})} placeholder="Créé auto si nouveau"/></div>}<div className="row"><div className="fg"><label>Boutique</label><input value={f.boutique} onChange={e=>setF({...f,boutique:e.target.value})}/></div><div className="fg"><label>Montant (€)</label><input type="number" step="0.5" value={f.montant_total} onChange={e=>setF({...f,montant_total:+e.target.value})}/></div></div><div className="row"><div className="fg"><label>Type commission</label><select value={f.commission_mode} onChange={e=>setF({...f,commission_mode:e.target.value})}><option value="pct">En %</option><option value="fixe">Fixe €</option></select></div><div className="fg"><label>{f.commission_mode==='pct'?'%':'€'}</label><input type="number" step="0.5" value={f.commission_mode==='pct'?f.commission_pct:f.commission_eur} onChange={e=>{const v=+e.target.value;setF({...f,...(f.commission_mode==='pct'?{commission_pct:v}:{commission_eur:v})})}}/></div></div><div className="row"><div className="fg"><label>Technique</label><select value={f.technique} onChange={e=>setF({...f,technique:e.target.value})}><option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t}>{t}</option>)}</select></div><div className="fg"><label>Statut</label><select value={f.statut} onChange={e=>setF({...f,statut:e.target.value})}><option>En cours</option><option>Validée</option><option>Annulée</option></select></div></div><div className="row"><div className="fg"><label>Paiement</label><select value={f.paiement} onChange={e=>setF({...f,paiement:e.target.value})}><option>Non payée</option><option>Payée</option></select></div><div className="fg"><label>Notes</label><input value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></div></div><button className="btn btn-p" onClick={save}>✅ {editId?'Sauvegarder':'Créer'}</button></Modal>}</div>}
+
+function Clients({toast,onSelect}){const[achs,setAchs]=useState([]);const[show,setShow]=useState(false);const[filter,setFilter]=useState('');const[f,setF]=useState({nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:''});const load=()=>$api('/api/acheteurs').then(setAchs);useEffect(()=>{load()},[]);const add=async()=>{if(!f.nom.trim())return;try{await $api('/api/acheteurs',{method:'POST',body:f});toast('Ajouté');setShow(false);setF({nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:''});load()}catch{toast('Nom existe déjà')}};const filtered=achs.filter(a=>a.nom.toLowerCase().includes(filter.toLowerCase()));
+return<div><div style={{display:'flex',gap:8,marginBottom:14}}><input style={{flex:1,background:'var(--bg2)',border:'1px solid var(--bg3)',borderRadius:8,padding:'7px 10px',color:'var(--text)',fontSize:'.84rem'}} placeholder="🔎 Filtrer..." value={filter} onChange={e=>setFilter(e.target.value)}/><button className="btn btn-p btn-sm" onClick={()=>setShow(true)}>➕ Client</button></div>
+<div className="tbl"><table><thead><tr><th>Nom</th><th>Parrain</th><th>Comm. %</th><th>Inscrit</th><th></th></tr></thead><tbody>{filtered.map(a=><tr key={a.id} style={{cursor:'pointer'}} onClick={()=>onSelect(a.id)}><td style={{fontWeight:600,color:'var(--text)'}}>{a.nom}</td><td>{a.parrain}</td><td>{a.commission_parrain}%</td><td>{a.date_creation?.slice(0,10)}</td><td><button className="btn btn-d btn-sm" onClick={e=>{e.stopPropagation();$api(`/api/acheteurs/${a.id}`,{method:'DELETE'}).then(()=>{toast('Supprimé');load()})}}>🗑️</button></td></tr>)}</tbody></table></div>
+{show&&<Modal onClose={()=>setShow(false)}><h3>Nouveau client</h3><div className="row"><div className="fg"><label>Nom *</label><input value={f.nom} onChange={e=>setF({...f,nom:e.target.value})}/></div><div className="fg"><label>Parrain</label><input value={f.parrain} onChange={e=>setF({...f,parrain:e.target.value})}/></div></div><div className="row"><div className="fg"><label>Commission parrain %</label><input type="number" value={f.commission_parrain} onChange={e=>setF({...f,commission_parrain:+e.target.value})}/></div><div className="fg"><label>ID boutique</label><input value={f.identifiant_boutique} onChange={e=>setF({...f,identifiant_boutique:e.target.value})}/></div></div><div className="fg"><label>MDP boutique</label><input type="password" value={f.mdp_boutique} onChange={e=>setF({...f,mdp_boutique:e.target.value})}/></div><button className="btn btn-p" onClick={add}>✅ Ajouter</button></Modal>}</div>}
+
+function Profil({aid,toast}){const[data,setData]=useState(null);const[noteText,setNoteText]=useState('');const[editing,setEditing]=useState(false);const[ef,setEf]=useState({});const load=()=>$api(`/api/acheteurs/${aid}`).then(d=>{setData(d);setEf({nom:d.acheteur.nom,parrain:d.acheteur.parrain==='Aucun'?'':d.acheteur.parrain,commission_parrain:d.acheteur.commission_parrain,identifiant_boutique:d.acheteur.identifiant_boutique,mdp_boutique:d.acheteur.mdp_boutique})});useEffect(()=>{load()},[aid]);if(!data)return<div className="empty">Chargement...</div>;const{acheteur:a,commandes:cmds,notes,filleuls_commissions}=data;const total=cmds.reduce((s,c)=>s+c.montant_total,0);const addNote=async()=>{if(!noteText.trim())return;await $api(`/api/acheteurs/${aid}/notes`,{method:'POST',body:{contenu:noteText}});setNoteText('');load()};const saveEdit=async()=>{await $api(`/api/acheteurs/${aid}`,{method:'PUT',body:ef});toast('Mis à jour');setEditing(false);load()};
+return<div><div className="profil-h"><button className="profil-edit" onClick={()=>setEditing(true)}>⚙️</button><h3>👤 {a.nom}</h3><p>📅 {a.date_creation?.slice(0,10)}</p><div className="profil-badge">{a.parrain!=='Aucun'?`Parrain : ${a.parrain} (${a.commission_parrain}%)`:'Pas de parrain'}</div></div>
+{(a.identifiant_boutique||a.mdp_boutique)&&<><div className="st">🔐 Accès Boutique</div><div className="cred-box">Identifiant : {a.identifiant_boutique||'—'}{'\n'}Mot de passe : {a.mdp_boutique||'—'}</div></>}
+{filleuls_commissions>0&&<div className="card"><div className="st">🤝 Parrainage</div><p style={{color:'var(--text2)',fontSize:'.82rem'}}>Commissions filleuls : <b style={{color:'var(--accent)'}}>{fmt(filleuls_commissions)} €</b></p></div>}
+<div className="kpi-grid"><div className="kpi"><div className="label">Commandes</div><div className="value">{cmds.length}</div></div><div className="kpi"><div className="label">Total</div><div className="value">{fmt(total)} €</div></div></div>
+{cmds.length>0&&<div className="tbl"><table><thead><tr><th>Date</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th><th>Paiement</th></tr></thead><tbody>{cmds.map(c=><tr key={c.id}><td>{c.date?.slice(0,10)}</td><td>{c.boutique}</td><td>{fmt(c.montant_total)} €</td><td>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td><td><span className={`bs ${pc(c.paiement)}`}>{c.paiement||'Non payée'}</span></td></tr>)}</tbody></table></div>}
+<hr className="divider"/><div className="st">💬 Notes</div><div style={{display:'flex',gap:6,marginBottom:10}}><input style={{flex:1,background:'var(--bg)',border:'1px solid var(--bg3)',borderRadius:8,padding:'7px 10px',color:'var(--text)',fontSize:'.84rem'}} placeholder="Ajouter une note..." value={noteText} onChange={e=>setNoteText(e.target.value)}/><button className="btn btn-p btn-sm" onClick={addNote}>💬</button></div>{notes.map(n=><div className="note-item" key={n.id}><div className="nm">{n.auteur} — {n.date_creation}</div>{n.contenu}</div>)}
+{editing&&<Modal onClose={()=>setEditing(false)}><h3>⚙️ Modifier</h3><div className="row"><div className="fg"><label>Nom</label><input value={ef.nom} onChange={e=>setEf({...ef,nom:e.target.value})}/></div><div className="fg"><label>Parrain</label><input value={ef.parrain} onChange={e=>setEf({...ef,parrain:e.target.value})}/></div></div><div className="fg"><label>Commission %</label><input type="number" value={ef.commission_parrain} onChange={e=>setEf({...ef,commission_parrain:+e.target.value})}/></div><div className="row"><div className="fg"><label>ID boutique</label><input value={ef.identifiant_boutique} onChange={e=>setEf({...ef,identifiant_boutique:e.target.value})}/></div><div className="fg"><label>MDP boutique</label><input value={ef.mdp_boutique} onChange={e=>setEf({...ef,mdp_boutique:e.target.value})}/></div></div><button className="btn btn-p" onClick={saveEdit}>💾 Sauvegarder</button></Modal>}</div>}
+
+// ━━━ PARRAINS ━━━
+function Parrains({toast}){
+  const[parrains,setParrains]=useState([]);const[selected,setSelected]=useState(null);const[trans,setTrans]=useState(null);
+  const[showAdd,setShowAdd]=useState(false);const[addForm,setAddForm]=useState({montant:0,description:''});
+  const[showNew,setShowNew]=useState(false);const[clients,setClients]=useState([]);const[newParrain,setNewParrain]=useState('');
+  const load=()=>{$api('/api/parrains').then(setParrains);$api('/api/acheteurs').then(setClients)};
+  useEffect(()=>{load()},[]);
+  const loadTrans=nom=>{setSelected(nom);$api(`/api/parrains/${encodeURIComponent(nom)}/transactions`).then(setTrans)};
+  const addTrans=async()=>{if(addForm.montant<=0||!selected)return;await $api('/api/parrains/transaction',{method:'POST',body:{parrain_nom:selected,montant:addForm.montant,description:addForm.description}});toast(`+${addForm.montant} € pour ${selected}`);setAddForm({montant:0,description:''});setShowAdd(false);load();loadTrans(selected)};
+  
   return<div>
-    <div className="tabs"><button className={tab==='att'?'active':''} onClick={()=>setTab('att')}>En attente ({att.length})</button><button className={tab==='hist'?'active':''} onClick={()=>setTab('hist')}>Historique</button></div>
-    {tab==='att'&&(att.length===0?<div className="empty">Aucune demande 🎉</div>:att.map(d=><div className="pending-card" key={d.id}>
-      <h4>#{d.id} — {d.nom_client}</h4>
-      <div className="meta">🛍️ <b>{d.boutique}</b> · 💶 <b>{fmt(d.montant)} €</b> · {d.date_soumission?.slice(0,10)}</div>
-      {d.notes_client&&<p style={{fontSize:'.78rem',color:'var(--text3)',marginBottom:6}}>💬 {d.notes_client}</p>}
-      {(d.identifiant_boutique||d.mdp_boutique)&&<div className="cred-box">ID: {d.identifiant_boutique||'—'}{'\n'}MDP: {d.mdp_boutique||'—'}</div>}
-      <div className="row">
-        <div className="fg"><label>Relier à un client existant</label><select onChange={e=>upd(d.id,'client_id',e.target.value?parseInt(e.target.value):null)}><option value="">Nouveau client</option>{clients.map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}</select></div>
-        <div className="fg"><label>Technique</label><select onChange={e=>upd(d.id,'technique',e.target.value)}><option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
-      </div>
-      <div className="row">
-        <div className="fg"><label>Commission</label><select onChange={e=>upd(d.id,'mode',e.target.value)}><option value="pct">En %</option><option value="fixe">Fixe €</option></select></div>
-        <div className="fg"><label>{(vf[d.id]?.mode||'pct')==='pct'?'%':'€'}</label><input type="number" step="0.5" onChange={e=>upd(d.id,(vf[d.id]?.mode||'pct')==='pct'?'pct':'eur',+e.target.value)}/></div>
-      </div>
-      <div className="fg"><label>Notes</label><input onChange={e=>upd(d.id,'notes',e.target.value)}/></div>
-      <div style={{display:'flex',gap:6}}><button className="btn btn-p btn-sm" onClick={()=>valider(d.id)}>✅ Valider</button><button className="btn btn-d btn-sm" onClick={()=>rejeter(d.id)}>❌</button></div>
-    </div>))}
-    {tab==='hist'&&(hist.length===0?<div className="empty">Vide</div>:<div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Statut</th></tr></thead><tbody>{hist.map(d=><tr key={d.id}><td>{d.id}</td><td>{d.date_soumission?.slice(0,10)}</td><td>{d.nom_client}</td><td>{d.boutique}</td><td>{fmt(d.montant)} €</td><td><span className={`bs ${sc(d.statut)}`}>{d.statut}</span></td></tr>)}</tbody></table></div>)}
-  </div>
-}
+    <div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}><button className="btn btn-p btn-sm" onClick={()=>setShowNew(true)}>➕ Parrain</button></div>
+    {parrains.length===0?<div className="empty">Aucun parrain</div>:parrains.map(p=><div className="parrain-card" key={p.parrain}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><h4>🤝 {p.parrain}</h4><button className="btn btn-p btn-sm" onClick={()=>{setSelected(p.parrain);setShowAdd(true)}}>+ Transaction</button></div>
+      <div className="stats"><span>Filleuls: <b>{p.filleuls}</b></span><span>Commandes: <b>{p.commandes}</b></span><span>CA: <b>{fmt(p.ca)} €</b></span></div>
+      <div className="stats"><span>Comm. auto: <b style={{color:'var(--accent)'}}>{fmt(p.comm_auto)} €</b></span><span>Primes: <b style={{color:'var(--amber)'}}>{fmt(p.transactions_manuelles)} €</b></span><span>Total dû: <b style={{color:'var(--red)'}}>{fmt(p.total_du)} €</b></span></div>
+      <button className="btn btn-g btn-sm" style={{marginTop:6}} onClick={()=>loadTrans(p.parrain)}>📋 Voir les transactions</button>
+    </div>)}
+    
+    {selected&&trans&&<Modal onClose={()=>{setSelected(null);setTrans(null)}}><h3>Transactions — {selected}</h3>
+      <div className="st">Commissions automatiques</div>
+      {trans.auto.length===0?<div className="empty">Aucune</div>:trans.auto.map((t,i)=><div className="trans-item" key={`a${i}`}><span>{t.date?.slice(0,10)} — {t.client} — {t.boutique}</span><span style={{color:'var(--accent)',fontWeight:600}}>{fmt(t.montant)} €</span></div>)}
+      <hr className="divider"/>
+      <div className="st">Primes manuelles</div>
+      {trans.manual.length===0?<div className="empty">Aucune</div>:trans.manual.map(t=><div className="trans-item" key={`m${t.id}`}><span>{t.date?.slice(0,10)} — {t.client||'Prime'}</span><span style={{display:'flex',gap:6,alignItems:'center'}}><span style={{color:'var(--amber)',fontWeight:600}}>{fmt(t.montant)} €</span><button className="btn btn-d btn-sm" onClick={async()=>{await $api(`/api/parrains/transaction/${t.id}`,{method:'DELETE'});loadTrans(selected);load()}}>🗑️</button></span></div>)}
+    </Modal>}
+    
+    {showAdd&&<Modal onClose={()=>setShowAdd(false)}><h3>+ Transaction pour {selected}</h3>
+      <div className="fg"><label>Montant (€)</label><input type="number" step="0.5" value={addForm.montant} onChange={e=>setAddForm({...addForm,montant:+e.target.value})}/></div>
+      <div className="fg"><label>Description</label><input value={addForm.description} onChange={e=>setAddForm({...addForm,description:e.target.value})} placeholder="Ex: Prime de bienvenue"/></div>
+      <button className="btn btn-p" onClick={addTrans}>✅ Ajouter</button>
+    </Modal>}
 
-// ━━━ COMMANDES ━━━
-function Commandes({toast,showModal}){
-  const[cmds,setCmds]=useState([]);const[show,setShow]=useState(showModal||false);const[editId,setEditId]=useState(null);
-  const[f,setF]=useState({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',paiement:'Non payée',technique:''});
-  const[fS,setFS]=useState('');const[fP,setFP]=useState('');
-  const load=()=>$api('/api/commandes').then(setCmds);useEffect(()=>{load()},[]);
-
-  const openNew=()=>{setEditId(null);setF({acheteur_nom:'',boutique:'',montant_total:0,commission_mode:'pct',commission_pct:0,commission_eur:0,notes:'',statut:'En cours',paiement:'Non payée',technique:''});setShow(true)};
-  // Expose openNew via effect when showModal changes
-  useEffect(()=>{if(showModal)openNew()},[showModal]);
-
-  const save=async()=>{
-    if(editId){await $api(`/api/commandes/${editId}`,{method:'PUT',body:{boutique:f.boutique,montant_total:f.montant_total,commission_mode:f.commission_mode,commission_pct:f.commission_pct,commission_eur:f.commission_eur,notes:f.notes,statut:f.statut,paiement:f.paiement,technique:f.technique}});toast('Modifiée')}
-    else{if(!f.acheteur_nom.trim()||!f.boutique.trim()||f.montant_total<=0)return;await $api('/api/commandes',{method:'POST',body:f});toast('Créée')}
-    setShow(false);setEditId(null);load()};
-  const edit=c=>{setEditId(c.id);setF({acheteur_nom:c.acheteur,boutique:c.boutique,montant_total:c.montant_total,commission_mode:c.commission_mode,commission_pct:c.commission_vendeur_pct,commission_eur:c.commission_vendeur_eur,notes:c.notes,statut:c.statut,paiement:c.paiement||'Non payée',technique:c.technique||''});setShow(true)};
-  const togglePay=async(cid)=>{await $api(`/api/commandes/${cid}/toggle-paiement`,{method:'POST'});load()};
-  const filtered=cmds.filter(c=>{if(fS&&c.statut!==fS)return false;if(fP&&(c.paiement||'Non payée')!==fP)return false;return true});
-
-  return<div>
-    <div className="filters">
-      <select value={fS} onChange={e=>setFS(e.target.value)}><option value="">Tous statuts</option><option>En cours</option><option>Validée</option><option>Annulée</option></select>
-      <select value={fP} onChange={e=>setFP(e.target.value)}><option value="">Tous paiements</option><option>Non payée</option><option>Payée</option></select>
-      <button className="btn btn-p btn-sm" onClick={openNew}>➕ Commande</button>
-    </div>
-    <div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Coût</th><th>Statut</th><th>Paiement</th><th></th></tr></thead>
-    <tbody>{filtered.map(c=><tr key={c.id}><td>{c.id}</td><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.montant_total)} €</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td style={{fontFamily:'var(--mono)'}}>{fmt(c.cout_total)} €</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td>
-      <td><span className={`bs ${pc(c.paiement)} ${c.statut==='Validée'?(c.paiement==='Payée'?'payee-click':'non-payee-click'):''}`} onClick={()=>c.statut==='Validée'&&togglePay(c.id)} title={c.statut==='Validée'?'Cliquer pour changer le paiement':''}>{c.paiement||'Non payée'}</span></td>
-      <td style={{display:'flex',gap:3}}><button className="btn btn-g btn-sm" onClick={()=>edit(c)}>✏️</button><button className="btn btn-d btn-sm" onClick={()=>{$api(`/api/commandes/${c.id}`,{method:'DELETE'}).then(load)}}>🗑️</button></td></tr>)}</tbody></table></div>
-    {show&&<Modal onClose={()=>setShow(false)}><h3>{editId?`Modifier #${editId}`:'Nouvelle commande'}</h3>
-      {!editId&&<div className="fg"><label>Client</label><input value={f.acheteur_nom} onChange={e=>setF({...f,acheteur_nom:e.target.value})} placeholder="Créé auto si nouveau"/></div>}
-      <div className="row"><div className="fg"><label>Boutique</label><input value={f.boutique} onChange={e=>setF({...f,boutique:e.target.value})}/></div><div className="fg"><label>Montant (€)</label><input type="number" step="0.5" value={f.montant_total} onChange={e=>setF({...f,montant_total:+e.target.value})}/></div></div>
-      <div className="row"><div className="fg"><label>Type commission</label><select value={f.commission_mode} onChange={e=>setF({...f,commission_mode:e.target.value})}><option value="pct">En %</option><option value="fixe">Fixe €</option></select></div><div className="fg"><label>{f.commission_mode==='pct'?'%':'€'}</label><input type="number" step="0.5" value={f.commission_mode==='pct'?f.commission_pct:f.commission_eur} onChange={e=>{const v=+e.target.value;setF({...f,...(f.commission_mode==='pct'?{commission_pct:v}:{commission_eur:v})})}}/></div></div>
-      <div className="row"><div className="fg"><label>Technique</label><select value={f.technique} onChange={e=>setF({...f,technique:e.target.value})}><option value="">Aucune</option>{TECHNIQUES.map(t=><option key={t}>{t}</option>)}</select></div><div className="fg"><label>Statut</label><select value={f.statut} onChange={e=>setF({...f,statut:e.target.value})}><option>En cours</option><option>Validée</option><option>Annulée</option></select></div></div>
-      <div className="row"><div className="fg"><label>Paiement</label><select value={f.paiement} onChange={e=>setF({...f,paiement:e.target.value})}><option>Non payée</option><option>Payée</option></select></div><div className="fg"><label>Notes</label><input value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></div></div>
-      <button className="btn btn-p" onClick={save}>✅ {editId?'Sauvegarder':'Créer'}</button>
+    {showNew&&<Modal onClose={()=>setShowNew(false)}><h3>Ajouter un parrain</h3>
+      <p style={{fontSize:'.82rem',color:'var(--text3)',marginBottom:12}}>Sélectionnez un client existant ou tapez un nouveau nom. Le parrain doit ensuite être assigné à un client dans son profil.</p>
+      <div className="fg"><label>Nom du parrain</label><input value={newParrain} onChange={e=>setNewParrain(e.target.value)} placeholder="Tapez un nom..." list="clients-list"/><datalist id="clients-list">{clients.map(c=><option key={c.id} value={c.nom}/>)}</datalist></div>
+      <button className="btn btn-p" onClick={()=>{if(newParrain.trim()){toast(`Parrain "${newParrain}" — Assignez-le à un client dans son profil`);setShowNew(false);setNewParrain('')}}}>✅ OK</button>
     </Modal>}
   </div>
 }
 
-// ━━━ CLIENTS ━━━
-function Clients({toast,onSelect}){
-  const[achs,setAchs]=useState([]);const[show,setShow]=useState(false);const[filter,setFilter]=useState('');
-  const[f,setF]=useState({nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:''});
-  const load=()=>$api('/api/acheteurs').then(setAchs);useEffect(()=>{load()},[]);
-  const add=async()=>{if(!f.nom.trim())return;try{await $api('/api/acheteurs',{method:'POST',body:f});toast('Client ajouté');setShow(false);setF({nom:'',parrain:'',commission_parrain:0,identifiant_boutique:'',mdp_boutique:''});load()}catch(e){toast('Erreur: nom existe déjà')}};
-  const filtered=achs.filter(a=>a.nom.toLowerCase().includes(filter.toLowerCase()));
-  return<div>
-    <div style={{display:'flex',gap:8,marginBottom:14}}>
-      <input style={{flex:1,background:'var(--bg2)',border:'1px solid var(--bg3)',borderRadius:8,padding:'7px 10px',color:'var(--text)',fontSize:'.84rem'}} placeholder="🔎 Filtrer..." value={filter} onChange={e=>setFilter(e.target.value)}/>
-      <button className="btn btn-p btn-sm" onClick={()=>setShow(true)}>➕ Client</button>
-    </div>
-    <div className="tbl"><table><thead><tr><th>Nom</th><th>Parrain</th><th>Comm. %</th><th>Inscrit</th><th></th></tr></thead>
-    <tbody>{filtered.map(a=><tr key={a.id} style={{cursor:'pointer'}} onClick={()=>onSelect(a.id)}><td style={{fontWeight:600,color:'var(--text)'}}>{a.nom}</td><td>{a.parrain}</td><td>{a.commission_parrain}%</td><td>{a.date_creation?.slice(0,10)}</td><td><button className="btn btn-d btn-sm" onClick={e=>{e.stopPropagation();$api(`/api/acheteurs/${a.id}`,{method:'DELETE'}).then(()=>{toast('Supprimé');load()})}}>🗑️</button></td></tr>)}</tbody></table></div>
-    {show&&<Modal onClose={()=>setShow(false)}><h3>Nouveau client</h3>
-      <div className="row"><div className="fg"><label>Nom *</label><input value={f.nom} onChange={e=>setF({...f,nom:e.target.value})}/></div><div className="fg"><label>Parrain</label><input value={f.parrain} onChange={e=>setF({...f,parrain:e.target.value})}/></div></div>
-      <div className="row"><div className="fg"><label>Commission parrain %</label><input type="number" value={f.commission_parrain} onChange={e=>setF({...f,commission_parrain:+e.target.value})}/></div><div className="fg"><label>ID boutique</label><input value={f.identifiant_boutique} onChange={e=>setF({...f,identifiant_boutique:e.target.value})}/></div></div>
-      <div className="fg"><label>MDP boutique</label><input type="password" value={f.mdp_boutique} onChange={e=>setF({...f,mdp_boutique:e.target.value})}/></div>
-      <button className="btn btn-p" onClick={add}>✅ Ajouter</button>
-    </Modal>}
-  </div>
-}
+function Finances(){const[data,setData]=useState(null);const[tab,setTab]=useState('boutiques');useEffect(()=>{$api('/api/finances').then(setData)},[]);if(!data)return<div className="empty">Chargement...</div>;
+return<div><div className="tabs"><button className={tab==='boutiques'?'active':''} onClick={()=>setTab('boutiques')}>🏪 Boutiques</button><button className={tab==='nonpayees'?'active':''} onClick={()=>setTab('nonpayees')}>⏳ Non payées</button></div>
+{tab==='boutiques'&&<div className="tbl"><table><thead><tr><th>Boutique</th><th>Commandes</th><th>CA</th><th>Commission</th><th>Coûts</th><th>Profit</th></tr></thead><tbody>{data.boutiques.map(b=><tr key={b.boutique}><td style={{fontWeight:600}}>{b.boutique}</td><td>{b.commandes}</td><td>{fmt(b.ca)} €</td><td>{fmt(b.commission)} €</td><td>{fmt(b.couts)} €</td><td style={{color:b.commission-b.couts>=0?'var(--green)':'var(--red)',fontWeight:600}}>{fmt(b.commission-b.couts)} €</td></tr>)}</tbody></table></div>}
+{tab==='nonpayees'&&(data.non_payees.length===0?<div className="empty">Tout est payé 🎉</div>:<div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th></tr></thead><tbody>{data.non_payees.map(c=><tr key={c.id}><td>{c.id}</td><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td>{fmt(c.montant_total)} €</td><td style={{color:'var(--amber)',fontWeight:600}}>{fmt(c.commission_vendeur_eur)} €</td></tr>)}</tbody></table></div>)}</div>}
 
-// ━━━ PROFIL ━━━
-function Profil({aid,toast}){
-  const[data,setData]=useState(null);const[noteText,setNoteText]=useState('');const[editing,setEditing]=useState(false);
-  const[ef,setEf]=useState({});
-  const load=()=>$api(`/api/acheteurs/${aid}`).then(d=>{setData(d);setEf({nom:d.acheteur.nom,parrain:d.acheteur.parrain==='Aucun'?'':d.acheteur.parrain,commission_parrain:d.acheteur.commission_parrain,identifiant_boutique:d.acheteur.identifiant_boutique,mdp_boutique:d.acheteur.mdp_boutique})});
-  useEffect(()=>{load()},[aid]);
-  if(!data)return<div className="empty">Chargement...</div>;
-  const{acheteur:a,commandes:cmds,notes,filleuls_commissions}=data;
-  const total=cmds.reduce((s,c)=>s+c.montant_total,0);
-  const addNote=async()=>{if(!noteText.trim())return;await $api(`/api/acheteurs/${aid}/notes`,{method:'POST',body:{contenu:noteText}});setNoteText('');load()};
-  const saveEdit=async()=>{await $api(`/api/acheteurs/${aid}`,{method:'PUT',body:ef});toast('Mis à jour');setEditing(false);load()};
-  return<div>
-    <div className="profil-h"><button className="profil-edit" onClick={()=>setEditing(true)}>⚙️</button><h3>👤 {a.nom}</h3><p>📅 {a.date_creation?.slice(0,10)}</p><div className="profil-badge">{a.parrain!=='Aucun'?`Parrain : ${a.parrain} (${a.commission_parrain}%)`:'Pas de parrain'}</div></div>
-    {(a.identifiant_boutique||a.mdp_boutique)&&<><div className="st">🔐 Accès Boutique</div><div className="cred-box">Identifiant : {a.identifiant_boutique||'—'}{'\n'}Mot de passe : {a.mdp_boutique||'—'}</div></>}
-    {filleuls_commissions>0&&<div className="card"><div className="st">🤝 Parrainage</div><p style={{color:'var(--text2)',fontSize:'.82rem'}}>Commissions générées par ses filleuls : <b style={{color:'var(--accent)'}}>{fmt(filleuls_commissions)} €</b></p></div>}
-    <div className="kpi-grid"><div className="kpi"><div className="label">Commandes</div><div className="value">{cmds.length}</div></div><div className="kpi"><div className="label">Total</div><div className="value">{fmt(total)} €</div></div></div>
-    {cmds.length>0&&<div className="tbl"><table><thead><tr><th>Date</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th><th>Paiement</th></tr></thead>
-    <tbody>{cmds.map(c=><tr key={c.id}><td>{c.date?.slice(0,10)}</td><td>{c.boutique}</td><td>{fmt(c.montant_total)} €</td><td>{fmt(c.commission_vendeur_eur)} €</td><td>{c.technique&&<span className="bt">{c.technique}</span>}</td><td><span className={`bs ${sc(c.statut)}`}>{c.statut}</span></td><td><span className={`bs ${pc(c.paiement)}`}>{c.paiement||'Non payée'}</span></td></tr>)}</tbody></table></div>}
-    <hr className="divider"/><div className="st">💬 Notes</div>
-    <div style={{display:'flex',gap:6,marginBottom:10}}><input style={{flex:1,background:'var(--bg)',border:'1px solid var(--bg4)',borderRadius:8,padding:'7px 10px',color:'var(--text)',fontSize:'.84rem'}} placeholder="Ajouter une note..." value={noteText} onChange={e=>setNoteText(e.target.value)}/><button className="btn btn-p btn-sm" onClick={addNote}>💬</button></div>
-    {notes.map(n=><div className="note-item" key={n.id}><div className="nm">{n.auteur} — {n.date_creation}</div>{n.contenu}</div>)}
-    {editing&&<Modal onClose={()=>setEditing(false)}><h3>⚙️ Modifier le client</h3>
-      <div className="row"><div className="fg"><label>Nom</label><input value={ef.nom} onChange={e=>setEf({...ef,nom:e.target.value})}/></div><div className="fg"><label>Parrain</label><input value={ef.parrain} onChange={e=>setEf({...ef,parrain:e.target.value})}/></div></div>
-      <div className="fg"><label>Commission parrain %</label><input type="number" value={ef.commission_parrain} onChange={e=>setEf({...ef,commission_parrain:+e.target.value})}/></div>
-      <div className="row"><div className="fg"><label>ID boutique</label><input value={ef.identifiant_boutique} onChange={e=>setEf({...ef,identifiant_boutique:e.target.value})}/></div><div className="fg"><label>MDP boutique</label><input value={ef.mdp_boutique} onChange={e=>setEf({...ef,mdp_boutique:e.target.value})}/></div></div>
-      <button className="btn btn-p" onClick={saveEdit}>💾 Sauvegarder</button>
-    </Modal>}
-  </div>
-}
+function Couts({toast}){const[couts,setCouts]=useState([]);const[nom,setNom]=useState(TECHNIQUES[0]);const[prix,setPrix]=useState(0);const load=()=>$api('/api/couts').then(setCouts);useEffect(()=>{load()},[]);const save=async()=>{if(prix<=0)return;await $api('/api/couts',{method:'POST',body:{nom,prix}});toast(`${nom} → ${prix} €`);load();setPrix(0)};
+return<div>{couts.map(c=><div className="cost-item" key={c.nom}><span className="name">{c.nom}</span><span className="price">{fmt(c.prix)} €</span><button className="btn btn-d btn-sm" onClick={()=>{$api(`/api/couts/${c.nom}`,{method:'DELETE'}).then(load)}}>🗑️</button></div>)}<hr className="divider"/><div className="card"><div className="row"><div className="fg"><label>Technique</label><select value={nom} onChange={e=>setNom(e.target.value)}>{TECHNIQUES.map(t=><option key={t}>{t}</option>)}</select></div><div className="fg"><label>Prix (€)</label><input type="number" step="0.5" value={prix} onChange={e=>setPrix(+e.target.value)}/></div></div><button className="btn btn-p" onClick={save}>💾 Enregistrer</button></div></div>}
 
-// ━━━ FINANCES ━━━
-function Finances(){
-  const[data,setData]=useState(null);const[tab,setTab]=useState('parrains');
-  useEffect(()=>{$api('/api/finances').then(setData)},[]);
-  if(!data)return<div className="empty">Chargement...</div>;
-  return<div>
-    <div className="tabs"><button className={tab==='parrains'?'active':''} onClick={()=>setTab('parrains')}>🤝 Parrains</button><button className={tab==='boutiques'?'active':''} onClick={()=>setTab('boutiques')}>🏪 Boutiques</button><button className={tab==='nonpayees'?'active':''} onClick={()=>setTab('nonpayees')}>⏳ Non payées</button></div>
-    {tab==='parrains'&&(data.parrains.length===0?<div className="empty">Aucun parrainage</div>:<div className="tbl"><table><thead><tr><th>Parrain</th><th>Filleuls</th><th>Commandes</th><th>CA</th><th>Comm. due</th><th>Comm. payée</th><th>Reste</th></tr></thead>
-    <tbody>{data.parrains.map(p=><tr key={p.parrain}><td style={{fontWeight:600}}>{p.parrain}</td><td>{p.filleuls}</td><td>{p.commandes}</td><td>{fmt(p.ca)} €</td><td style={{color:'var(--amber)'}}>{fmt(p.comm_due)} €</td><td style={{color:'var(--green)'}}>{fmt(p.comm_payee)} €</td><td style={{color:'var(--red)',fontWeight:600}}>{fmt(p.comm_due-p.comm_payee)} €</td></tr>)}</tbody></table></div>)}
-    {tab==='boutiques'&&<div className="tbl"><table><thead><tr><th>Boutique</th><th>Commandes</th><th>CA</th><th>Commission</th><th>Coûts</th><th>Profit</th></tr></thead>
-    <tbody>{data.boutiques.map(b=><tr key={b.boutique}><td style={{fontWeight:600}}>{b.boutique}</td><td>{b.commandes}</td><td>{fmt(b.ca)} €</td><td>{fmt(b.commission)} €</td><td>{fmt(b.couts)} €</td><td style={{color:b.commission-b.couts>=0?'var(--green)':'var(--red)',fontWeight:600}}>{fmt(b.commission-b.couts)} €</td></tr>)}</tbody></table></div>}
-    {tab==='nonpayees'&&(data.non_payees.length===0?<div className="empty">Tout est payé 🎉</div>:<div className="tbl"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th></tr></thead>
-    <tbody>{data.non_payees.map(c=><tr key={c.id}><td>{c.id}</td><td>{c.date?.slice(0,10)}</td><td>{c.acheteur}</td><td>{c.boutique}</td><td>{fmt(c.montant_total)} €</td><td style={{color:'var(--amber)',fontWeight:600}}>{fmt(c.commission_vendeur_eur)} €</td></tr>)}</tbody></table></div>)}
-  </div>
-}
+function Parametres({toast,username,theme,setTheme}){const[op,setOp]=useState('');const[np,setNp]=useState('');const[np2,setNp2]=useState('');
+const changePw=async()=>{if(np!==np2)return toast('Pas identiques');try{await $api('/api/change-password',{method:'POST',body:{username,old_password:op,new_password:np}});toast('Modifié !')}catch{toast('Erreur')}};
+const reset=async()=>{if(!confirm('⚠️ TOUT supprimer ? Irréversible.'))return;await $api('/api/reset',{method:'POST'});toast('Réinitialisé')};
+const toggleTheme=()=>{const newT=theme==='dark'?'light':'dark';setTheme(newT);document.body.className=newT;localStorage.setItem('theme',newT);$api('/api/settings',{method:'POST',body:{key:'theme',value:newT}})};
+return<div>
+  <div className="card"><div className="st">🎨 Thème</div><div className="theme-toggle" onClick={toggleTheme}>{theme==='dark'?'🌙 Sombre':'☀️ Clair'} — Cliquer pour changer</div></div>
+  <div className="card"><div className="st">🔐 Mot de passe</div><div className="fg"><label>Actuel</label><input type="password" value={op} onChange={e=>setOp(e.target.value)}/></div><div className="row"><div className="fg"><label>Nouveau</label><input type="password" value={np} onChange={e=>setNp(e.target.value)}/></div><div className="fg"><label>Confirmer</label><input type="password" value={np2} onChange={e=>setNp2(e.target.value)}/></div></div><button className="btn btn-p" onClick={changePw}>🔐 Modifier</button></div>
+  <hr className="divider"/>
+  <div className="card"><div className="st">⚠️ Zone de danger</div><p style={{color:'var(--text3)',fontSize:'.8rem',marginBottom:10}}>Supprime toutes les données sauf coûts et compte admin.</p><button className="btn btn-d" onClick={reset}>🗑️ Tout réinitialiser</button></div>
+</div>}
 
-// ━━━ COUTS ━━━
-function Couts({toast}){
-  const[couts,setCouts]=useState([]);const[nom,setNom]=useState(TECHNIQUES[0]);const[prix,setPrix]=useState(0);
-  const load=()=>$api('/api/couts').then(setCouts);useEffect(()=>{load()},[]);
-  const save=async()=>{if(prix<=0)return;await $api('/api/couts',{method:'POST',body:{nom,prix}});toast(`${nom} → ${prix} €`);load();setPrix(0)};
-  return<div>
-    {couts.map(c=><div className="cost-item" key={c.nom}><span className="name">{c.nom}</span><span className="price">{fmt(c.prix)} €</span><button className="btn btn-d btn-sm" onClick={()=>{$api(`/api/couts/${c.nom}`,{method:'DELETE'}).then(load)}}>🗑️</button></div>)}
-    <hr className="divider"/>
-    <div className="card"><div className="row"><div className="fg"><label>Technique</label><select value={nom} onChange={e=>setNom(e.target.value)}>{TECHNIQUES.map(t=><option key={t}>{t}</option>)}</select></div><div className="fg"><label>Prix (€)</label><input type="number" step="0.5" value={prix} onChange={e=>setPrix(+e.target.value)}/></div></div><button className="btn btn-p" onClick={save}>💾 Enregistrer</button></div>
-  </div>
-}
-
-// ━━━ PARAMETRES ━━━
-function Parametres({toast,username}){
-  const[op,setOp]=useState('');const[np,setNp]=useState('');const[np2,setNp2]=useState('');
-  const changePw=async()=>{if(np!==np2)return toast('Pas identiques');try{await $api('/api/change-password',{method:'POST',body:{username,old_password:op,new_password:np}});toast('Modifié !')}catch{toast('Erreur')}};
-  const reset=async()=>{if(!confirm('⚠️ TOUT supprimer ? Irréversible.'))return;await $api('/api/reset',{method:'POST'});toast('Réinitialisé')};
-  return<div>
-    <div className="card"><div className="st">🔐 Mot de passe</div><div className="fg"><label>Actuel</label><input type="password" value={op} onChange={e=>setOp(e.target.value)}/></div><div className="row"><div className="fg"><label>Nouveau</label><input type="password" value={np} onChange={e=>setNp(e.target.value)}/></div><div className="fg"><label>Confirmer</label><input type="password" value={np2} onChange={e=>setNp2(e.target.value)}/></div></div><button className="btn btn-p" onClick={changePw}>🔐 Modifier</button></div>
-    <hr className="divider"/>
-    <div className="card"><div className="st">⚠️ Zone de danger</div><p style={{color:'var(--text3)',fontSize:'.8rem',marginBottom:10}}>Supprime toutes les données sauf les coûts techniques et le compte admin.</p><button className="btn btn-d" onClick={reset}>🗑️ Tout réinitialiser</button></div>
-  </div>
-}
-
-// ━━━ APP ━━━
 function App(){
-  const[user,setUser]=useState(localStorage.getItem('username'));
-  const[page,setPage]=useState('dashboard');const[profilId,setProfilId]=useState(null);
-  const[toastMsg,setToastMsg]=useState('');const[showSearch,setShowSearch]=useState(false);
-  const[pending,setPending]=useState(0);const[cmdModal,setCmdModal]=useState(0);
-
+  const[user,setUser]=useState(localStorage.getItem('username'));const[page,setPage]=useState('dashboard');const[profilId,setProfilId]=useState(null);const[toastMsg,setToastMsg]=useState('');const[showSearch,setShowSearch]=useState(false);const[pending,setPending]=useState(0);const[cmdModal,setCmdModal]=useState(0);
+  const[theme,setTheme]=useState(localStorage.getItem('theme')||'dark');
+  useEffect(()=>{document.body.className=theme},[theme]);
   useEffect(()=>{if(user)$api('/api/dashboard').then(d=>setPending(d.pending)).catch(()=>{})},[user,page]);
-  const toast=m=>setToastMsg(m);
-  const nav=p=>{setPage(p)};
-  const logout=()=>{localStorage.clear();setUser(null)};
-
+  const toast=m=>setToastMsg(m);const nav=p=>setPage(p);const logout=()=>{localStorage.clear();setUser(null)};
   if(!user)return<Login onLogin={setUser}/>;
-
-  const menu=[
-    {s:'PRINCIPAL'},{key:'dashboard',icon:'📊',label:'Dashboard'},{key:'commandes',icon:'📋',label:'Commandes'},{key:'demandes',icon:'📩',label:'Demandes',badge:pending},
-    {s:'GESTION'},{key:'clients',icon:'👤',label:'Clients'},{key:'finances',icon:'💵',label:'Finances'},
-    {s:'CONFIG'},{key:'couts',icon:'💰',label:'Coûts'},{key:'parametres',icon:'⚙️',label:'Paramètres'},
-  ];
-  const titles={dashboard:'Dashboard',commandes:'Commandes',demandes:'Demandes',clients:'Clients',profil:'Profil',finances:'Finances',couts:'Coûts',parametres:'Paramètres'};
-
+  const menu=[{s:'PRINCIPAL'},{key:'dashboard',icon:'📊',label:'Dashboard'},{key:'commandes',icon:'📋',label:'Commandes'},{key:'demandes',icon:'📩',label:'Demandes',badge:pending},{s:'GESTION'},{key:'clients',icon:'👤',label:'Clients'},{key:'parrains',icon:'🤝',label:'Parrains'},{key:'finances',icon:'💵',label:'Finances'},{s:'CONFIG'},{key:'couts',icon:'💰',label:'Coûts'},{key:'parametres',icon:'⚙️',label:'Paramètres'}];
+  const titles={dashboard:'Dashboard',commandes:'Commandes',demandes:'Demandes',clients:'Clients',profil:'Profil',parrains:'Parrains',finances:'Finances',couts:'Coûts',parametres:'Paramètres'};
   return<div className="app">
-    <div className="sidebar">
-      <div className="logo">⚡ <span>SalesFlow</span></div><div className="user">{user}</div>
-      <nav>{menu.map((m,i)=>m.s?<div key={i} className="sl">{m.s}</div>:
-        <button key={m.key} className={page===m.key?'active':''} onClick={()=>nav(m.key)}><span>{m.icon}</span><span>{m.label}</span>{m.badge>0&&<span className="badge">{m.badge}</span>}</button>
-      )}</nav>
-      <div className="bottom"><button onClick={logout}>Déconnexion</button></div>
-    </div>
-    <div className="main">
-      <div className="topbar">
-        <h1>{page==='profil'?'🔎 Profil':`${(menu.find(m=>m.key===page)||{}).icon||''} ${titles[page]||''}`}</h1>
-        <div className="topbar-actions">
-          <button className="search-btn" onClick={()=>setShowSearch(true)}>🔍</button>
-          {(page==='dashboard'||page==='commandes')&&<button className="btn btn-p btn-sm" onClick={()=>{setPage('commandes');setCmdModal(c=>c+1)}}>➕ Commande</button>}
-        </div>
-      </div>
-      <div className="content">
-        {page==='dashboard'&&<Dashboard/>}
-        {page==='demandes'&&<Demandes toast={toast}/>}
-        {page==='commandes'&&<Commandes toast={toast} showModal={cmdModal}/>}
-        {page==='clients'&&<Clients toast={toast} onSelect={id=>{setProfilId(id);setPage('profil')}}/>}
-        {page==='profil'&&profilId&&<Profil aid={profilId} toast={toast}/>}
-        {page==='finances'&&<Finances/>}
-        {page==='couts'&&<Couts toast={toast}/>}
-        {page==='parametres'&&<Parametres toast={toast} username={user}/>}
-      </div>
-    </div>
+    <div className="sidebar"><div className="logo">⚡ <span>SalesFlow</span></div><div className="user">{user}</div>
+    <nav>{menu.map((m,i)=>m.s?<div key={i} className="sl">{m.s}</div>:<button key={m.key} className={page===m.key?'active':''} onClick={()=>nav(m.key)}><span>{m.icon}</span><span>{m.label}</span>{m.badge>0&&<span className="badge">{m.badge}</span>}</button>)}</nav>
+    <div className="bottom"><button onClick={logout}>Déconnexion</button></div></div>
+    <div className="main"><div className="topbar"><h1>{page==='profil'?'🔎 Profil':`${(menu.find(m=>m.key===page)||{}).icon||''} ${titles[page]||''}`}</h1><div className="topbar-actions"><button className="search-btn" onClick={()=>setShowSearch(true)}>🔍</button>{(page==='dashboard'||page==='commandes')&&<button className="btn btn-p btn-sm" onClick={()=>{setPage('commandes');setCmdModal(c=>c+1)}}>➕ Commande</button>}</div></div>
+    <div className="content">
+      {page==='dashboard'&&<Dashboard/>}
+      {page==='demandes'&&<Demandes toast={toast}/>}
+      {page==='commandes'&&<Commandes toast={toast} showModal={cmdModal}/>}
+      {page==='clients'&&<Clients toast={toast} onSelect={id=>{setProfilId(id);setPage('profil')}}/>}
+      {page==='profil'&&profilId&&<Profil aid={profilId} toast={toast}/>}
+      {page==='parrains'&&<Parrains toast={toast}/>}
+      {page==='finances'&&<Finances/>}
+      {page==='couts'&&<Couts toast={toast}/>}
+      {page==='parametres'&&<Parametres toast={toast} username={user} theme={theme} setTheme={setTheme}/>}
+    </div></div>
     {showSearch&&<SearchOverlay onClose={()=>setShowSearch(false)} onSelect={r=>{if(r.type==='acheteur'){setProfilId(r.id);setPage('profil')}}}/>}
     {toastMsg&&<Toast msg={toastMsg} onClose={()=>setToastMsg('')}/>}
   </div>
 }
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
