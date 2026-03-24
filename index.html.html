@@ -132,30 +132,69 @@ body.light .sidebar *{color:#e2e8f0 !important;}
 .leaderboard-value{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green);}
 
 /* ── HAMBURGER ── */
-.hamburger{display:none;align-items:center;justify-content:center;background:none;border:none;color:var(--text);cursor:pointer;padding:4px 6px;font-size:1.4rem;margin-right:6px;border-radius:8px;}
+.hamburger{display:none;align-items:center;justify-content:center;background:none;border:none;color:var(--text);cursor:pointer;padding:4px 8px;font-size:1.3rem;margin-right:4px;border-radius:8px;}
 .hamburger:hover{background:var(--bg3);}
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sidebar-bg);border-top:1px solid var(--sidebar-border);z-index:100;padding:4px 0 max(env(safe-area-inset-bottom,0px),4px);}
+.bnav-items{display:flex;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 2px 5px;border:none;background:none;color:#64748b;cursor:pointer;gap:3px;font-size:0.6rem;font-weight:700;letter-spacing:0.3px;position:relative;border-top:2px solid transparent;transition:color .15s;}
+.bnav-item .bi{font-size:1.25rem;line-height:1;}
+.bnav-item.active{color:var(--accent);border-top-color:var(--accent);}
+.bnav-badge{position:absolute;top:3px;right:calc(50% - 18px);background:var(--red);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;}
 
 /* ── MOBILE ── */
 @media(max-width:768px){
+  /* Sidebar slide-in */
   .hamburger{display:flex;}
-  .sidebar{transform:translateX(-100%);transition:transform .25s ease;width:240px;}
+  .sidebar{transform:translateX(-100%);transition:transform .25s ease;width:260px;}
   .sidebar.open{transform:translateX(0);}
   .sidebar-overlay{display:block;}
-  .main{margin-left:0;}
+
+  /* Layout */
+  .main{margin-left:0;padding-bottom:74px;}
+  .bottom-nav{display:block;}
   .topbar{padding:10px 14px;}
-  .content{padding:12px 14px;}
-  .modal{width:calc(100vw - 24px);max-width:100%;margin:0 12px;}
-  .modal-bg{align-items:flex-end;padding-bottom:0;}
-  .modal{border-radius:14px 14px 0 0;max-height:90vh;}
+  .topbar h1{font-size:0.98rem;}
+  .content{padding:12px 12px 18px;}
+
+  /* KPI grid 2 colonnes */
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .kpi{padding:13px 11px;}
+  .kpi .value{font-size:1.1rem;}
+  .kpi .label{font-size:0.64rem;}
+
+  /* Modal slide-up depuis le bas */
+  .modal-bg{align-items:flex-end;padding:0;}
+  .modal{width:100%;max-width:100%;border-radius:20px 20px 0 0;max-height:92vh;padding:8px 16px 24px;}
+  .modal::before{content:'';display:block;width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:0 auto 14px;}
+
+  /* Formulaires plus grands pour les doigts */
   .row{grid-template-columns:1fr;}
-  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .fg input,.fg select,.fg textarea{padding:10px 12px;font-size:0.9rem;}
+  .btn{padding:9px 16px;font-size:0.82rem;}
+  .btn-sm{padding:7px 11px;font-size:0.74rem;}
+
+  /* Tables scrollables */
   .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tbl th{font-size:0.65rem;padding:8px 9px;white-space:nowrap;}
+  .tbl td{font-size:0.78rem;padding:8px 9px;white-space:nowrap;}
+
+  /* Charts */
   .chart-row{grid-template-columns:1fr;}
-  .search-box{width:calc(100vw - 24px);}
-  .search-overlay{padding-top:40px;padding-left:12px;padding-right:12px;}
-  .filters{gap:4px;}
-  .topbar h1{font-size:1rem;}
+  .chart-container{height:220px;padding:12px;}
+
+  /* Recherche */
+  .search-overlay{padding:36px 12px 0;}
+  .search-box{width:100%;}
+
+  /* Divers */
+  .filters{gap:4px;flex-wrap:wrap;}
+  .filters select{font-size:0.75rem;padding:5px 6px;}
+  .card{padding:14px;}
+  .profil-h{padding:18px;}
+  .parrain-card .stats{flex-wrap:wrap;gap:8px;}
 }
 </style>
 </head>
@@ -173,6 +212,25 @@ async function $api(path,opts={}){const token=localStorage.getItem('token');cons
 function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,2500);return()=>clearTimeout(t)},[]);return<div className="toast">{msg}</div>}
 function Modal({children,onClose}){return<div className="modal-bg" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>{children}</div></div>}
 function Login({onLogin}){const[u,setU]=useState('');const[p,setP]=useState('');const[err,setErr]=useState('');const go=async e=>{e.preventDefault();try{const d=await $api('/api/login',{method:'POST',body:{username:u,password:p}});localStorage.setItem('token',d.token);localStorage.setItem('username',d.username);onLogin(d.username)}catch{setErr('Identifiants incorrects')}};return<div className="login-page"><form className="login-card" onSubmit={go}><h1>⚡ Sales<span>Flow</span></h1><p className="sub">Gestion des Ventes</p><div className="fg"><label>Identifiant</label><input value={u} onChange={e=>setU(e.target.value)}/></div><div className="fg"><label>Mot de passe</label><input type="password" value={p} onChange={e=>setP(e.target.value)}/></div>{err&&<p style={{color:'var(--red)',fontSize:'.8rem',margin:'4px 0'}}>{err}</p>}<button className="btn btn-p" type="submit">Se connecter</button><p className="hint">admin / admin</p></form></div>}
+function BottomNav({page,nav,pending,onMore}){
+  const items=[
+    {key:'dashboard',icon:'📊',label:'Dashboard'},
+    {key:'commandes',icon:'📋',label:'Commandes'},
+    {key:'demandes',icon:'📩',label:'Demandes',badge:pending},
+    {key:'clients',icon:'👤',label:'Clients'},
+  ];
+  const isOther=!items.find(it=>it.key===page);
+  return<div className="bottom-nav"><div className="bnav-items">
+    {items.map(it=><button key={it.key} className={"bnav-item"+(page===it.key?' active':'')} onClick={()=>nav(it.key)}>
+      {it.badge>0&&<span className="bnav-badge">{it.badge}</span>}
+      <span className="bi">{it.icon}</span><span>{it.label}</span>
+    </button>)}
+    <button className={"bnav-item"+(isOther?' active':'')} onClick={onMore}>
+      <span className="bi">☰</span><span>Plus</span>
+    </button>
+  </div></div>
+}
+
 function SearchOverlay({onClose,onSelect}){const[q,setQ]=useState('');const[res,setRes]=useState([]);useEffect(()=>{if(q.length>=2)$api(`/api/search?q=${q}`).then(setRes);else setRes([])},[q]);return<div className="search-overlay" onClick={onClose}><div className="search-box" onClick={e=>e.stopPropagation()}><input placeholder="Rechercher..." value={q} onChange={e=>setQ(e.target.value)} autoFocus/><div className="results">{res.map((r,i)=><div key={i} className="result" onClick={()=>{onSelect(r);onClose()}}>{r.type==='acheteur'?'👤':'📦'} <b>{r.titre}</b> {r.detail&&`— ${r.detail}`}</div>)}</div></div></div>}
 
 function Dashboard(){const[d,setD]=useState(null);useEffect(()=>{$api('/api/dashboard').then(setD)},[]);if(!d)return<div className="empty">Chargement...</div>;return<div>
@@ -334,6 +392,7 @@ function App(){
       {page==='couts'&&<Couts toast={toast}/>}
       {page==='parametres'&&<Parametres toast={toast} username={user} theme={theme} setTheme={setTheme}/>}
     </div></div>
+    <BottomNav page={page} nav={p=>{nav(p);setSidebarOpen(false)}} pending={pending} onMore={()=>setSidebarOpen(o=>!o)}/>
     {showSearch&&<SearchOverlay onClose={()=>setShowSearch(false)} onSelect={r=>{if(r.type==='acheteur'){setProfilId(r.id);setPage('profil')}}}/>}
     {toastMsg&&<Toast msg={toastMsg} onClose={()=>setToastMsg('')}/>}
   </div>
