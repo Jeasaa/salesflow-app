@@ -130,6 +130,33 @@ body.light .sidebar *{color:#e2e8f0 !important;}
 .leaderboard-rank{font-weight:700;color:var(--accent);min-width:25px;}
 .leaderboard-name{flex:1;padding:0 10px;}
 .leaderboard-value{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--green);}
+
+/* ── HAMBURGER ── */
+.hamburger{display:none;align-items:center;justify-content:center;background:none;border:none;color:var(--text);cursor:pointer;padding:4px 6px;font-size:1.4rem;margin-right:6px;border-radius:8px;}
+.hamburger:hover{background:var(--bg3);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  .hamburger{display:flex;}
+  .sidebar{transform:translateX(-100%);transition:transform .25s ease;width:240px;}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay{display:block;}
+  .main{margin-left:0;}
+  .topbar{padding:10px 14px;}
+  .content{padding:12px 14px;}
+  .modal{width:calc(100vw - 24px);max-width:100%;margin:0 12px;}
+  .modal-bg{align-items:flex-end;padding-bottom:0;}
+  .modal{border-radius:14px 14px 0 0;max-height:90vh;}
+  .row{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .chart-row{grid-template-columns:1fr;}
+  .search-box{width:calc(100vw - 24px);}
+  .search-overlay{padding-top:40px;padding-left:12px;padding-right:12px;}
+  .filters{gap:4px;}
+  .topbar h1{font-size:1rem;}
+}
 </style>
 </head>
 <body class="dark">
@@ -281,7 +308,7 @@ return<div>
 </div>}
 
 function App(){
-  const[user,setUser]=useState(localStorage.getItem('username'));const[page,setPage]=useState('dashboard');const[profilId,setProfilId]=useState(null);const[toastMsg,setToastMsg]=useState('');const[showSearch,setShowSearch]=useState(false);const[pending,setPending]=useState(0);const[cmdModal,setCmdModal]=useState(0);
+  const[user,setUser]=useState(localStorage.getItem('username'));const[page,setPage]=useState('dashboard');const[profilId,setProfilId]=useState(null);const[toastMsg,setToastMsg]=useState('');const[showSearch,setShowSearch]=useState(false);const[pending,setPending]=useState(0);const[cmdModal,setCmdModal]=useState(0);const[sidebarOpen,setSidebarOpen]=useState(false);
   const[theme,setTheme]=useState(localStorage.getItem('theme')||'dark');
   useEffect(()=>{document.body.className=theme},[theme]);
   useEffect(()=>{if(user)$api('/api/dashboard').then(d=>setPending(d.pending)).catch(()=>{})},[user,page]);
@@ -290,10 +317,11 @@ function App(){
   const menu=[{s:'PRINCIPAL'},{key:'dashboard',icon:'📊',label:'Dashboard'},{key:'commandes',icon:'📋',label:'Commandes'},{key:'demandes',icon:'📩',label:'Demandes',badge:pending},{s:'GESTION'},{key:'clients',icon:'👤',label:'Clients'},{key:'parrains',icon:'🤝',label:'Parrains'},{key:'finances',icon:'💵',label:'Finances'},{key:'analytique',icon:'📈',label:'Analytique'},{s:'CONFIG'},{key:'couts',icon:'💰',label:'Coûts'},{key:'parametres',icon:'⚙️',label:'Paramètres'}];
   const titles={dashboard:'Dashboard',commandes:'Commandes',demandes:'Demandes',clients:'Clients',profil:'Profil',parrains:'Parrains',finances:'Finances',analytique:'Analytique',couts:'Coûts',parametres:'Paramètres'};
   return<div className="app">
-    <div className="sidebar"><div className="logo">⚡ <span>SalesFlow</span></div><div className="user">{user}</div>
-    <nav>{menu.map((m,i)=>m.s?<div key={i} className="sl">{m.s}</div>:<button key={m.key} className={page===m.key?'active':''} onClick={()=>nav(m.key)}><span>{m.icon}</span><span>{m.label}</span>{m.badge>0&&<span className="badge">{m.badge}</span>}</button>)}</nav>
+    {sidebarOpen&&<div className="sidebar-overlay" onClick={()=>setSidebarOpen(false)}/>}
+    <div className={"sidebar"+(sidebarOpen?" open":"")}><div className="logo">⚡ <span>SalesFlow</span></div><div className="user">{user}</div>
+    <nav>{menu.map((m,i)=>m.s?<div key={i} className="sl">{m.s}</div>:<button key={m.key} className={page===m.key?'active':''} onClick={()=>{nav(m.key);setSidebarOpen(false)}}><span>{m.icon}</span><span>{m.label}</span>{m.badge>0&&<span className="badge">{m.badge}</span>}</button>)}</nav>
     <div className="bottom"><button onClick={logout}>Déconnexion</button></div></div>
-    <div className="main"><div className="topbar"><h1>{page==='profil'?'🔎 Profil':`${(menu.find(m=>m.key===page)||{}).icon||''} ${titles[page]||''}`}</h1><div className="topbar-actions"><button className="search-btn" onClick={()=>setShowSearch(true)}>🔍</button>{(page==='dashboard'||page==='commandes')&&<button className="btn btn-p btn-sm" onClick={()=>{setPage('commandes');setCmdModal(c=>c+1)}}>➕ Commande</button>}</div></div>
+    <div className="main"><div className="topbar"><button className="hamburger" onClick={()=>setSidebarOpen(o=>!o)}>☰</button><h1>{page==='profil'?'🔎 Profil':`${(menu.find(m=>m.key===page)||{}).icon||''} ${titles[page]||''}`}</h1><div className="topbar-actions"><button className="search-btn" onClick={()=>setShowSearch(true)}>🔍</button>{(page==='dashboard'||page==='commandes')&&<button className="btn btn-p btn-sm" onClick={()=>{setPage('commandes');setCmdModal(c=>c+1)}}>➕ Commande</button>}</div></div>
     <div className="content">
       {page==='dashboard'&&<Dashboard/>}
       {page==='demandes'&&<Demandes toast={toast}/>}
