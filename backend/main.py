@@ -44,6 +44,12 @@ def init_db():
         except: pass
     try: run("ALTER TABLE commandes ADD COLUMN paiement TEXT DEFAULT 'Non payée'")
     except: pass
+    try: run("ALTER TABLE acheteurs ADD COLUMN prenom TEXT DEFAULT ''")
+    except: pass
+    try: run("ALTER TABLE commandes ADD COLUMN identifiant_boutique TEXT DEFAULT ''")
+    except: pass
+    try: run("ALTER TABLE commandes ADD COLUMN mdp_boutique TEXT DEFAULT ''")
+    except: pass
     if query_val("SELECT COUNT(*) FROM users") == 0:
         run("INSERT INTO users (username,password_hash,role,created_at) VALUES (?,?,?,?)",
             ["admin", hashlib.sha256("admin".encode()).hexdigest(), "admin", now()])
@@ -94,21 +100,28 @@ def dashboard():
     stats = query_one("""SELECT
         (SELECT COUNT(*) FROM acheteurs) as clients,
         (SELECT COUNT(*) FROM commandes) as commandes,
+        (SELECT COUNT(*) FROM commandes WHERE statut='En cours') as nb_en_cours,
         (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE statut='En cours') as comm_en_cours,
         (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE statut='En cours') as couts_en_cours,
         (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE statut='Validée' AND paiement='Non payée') as en_attente_paiement,
         (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE paiement='Payée') as comm_payee,
         (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE paiement='Payée') as couts_payes,
+        (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE statut='Fails') as couts_fails,
+        (SELECT COUNT(*) FROM commandes WHERE statut='Fails') as nb_fails,
         (SELECT COUNT(*) FROM demandes WHERE statut='En attente') as pending
     """)
-    benefice = float(stats['comm_payee']) - float(stats['couts_payes'])
+    benefice = float(stats['comm_payee']) - float(stats['couts_payes']) - float(stats['couts_fails'])
     comm_en_cours_net = float(stats['comm_en_cours']) - float(stats['couts_en_cours'])
     recent = query("SELECT c.id,c.date,a.nom as acheteur,c.boutique,c.montant_total,c.commission_vendeur_eur,c.technique,c.cout_total,c.statut,c.paiement FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id ORDER BY c.date DESC LIMIT 10")
     return {
         "clients":stats['clients'],"commandes":stats['commandes'],
+        "nb_en_cours":int(stats['nb_en_cours']),
         "comm_en_cours":comm_en_cours_net,
         "en_attente_paiement":float(stats['en_attente_paiement']),
-        "benefice":benefice,"pending":int(stats['pending']),"recent":recent
+        "benefice":benefice,
+        "couts_fails":float(stats['couts_fails']),
+        "nb_fails":int(stats['nb_fails']),
+        "pending":int(stats['pending']),"recent":recent
     }
 
 # ━━━ COÛTS ━━━
@@ -146,19 +159,19 @@ def get_acheteur(aid: int):
     return {"acheteur":ach,"commandes":cmds,"notes":notes,"filleuls_commissions":filleuls_commissions}
 
 class AcheteurReq(BaseModel):
-    nom: str; parrain: str = "Aucun"; commission_parrain: float = 0.0; identifiant_boutique: str = ""; mdp_boutique: str = ""
+    nom: str; prenom: str = ""; parrain: str = "Aucun"; commission_parrain: float = 0.0
 @app.post("/api/acheteurs")
 def add_acheteur(req: AcheteurReq):
     try:
-        run("INSERT INTO acheteurs (nom,parrain,commission_parrain,identifiant_boutique,mdp_boutique,date_creation) VALUES (?,?,?,?,?,?)",
-            [req.nom.strip(),req.parrain.strip() or "Aucun",req.commission_parrain,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),now()])
+        run("INSERT INTO acheteurs (nom,prenom,parrain,commission_parrain,date_creation) VALUES (?,?,?,?,?)",
+            [req.nom.strip(),req.prenom.strip(),req.parrain.strip() or "Aucun",req.commission_parrain,now()])
         return {"ok":True}
     except: raise HTTPException(400,"Ce nom existe déjà")
 @app.put("/api/acheteurs/{aid}")
 def mod_acheteur(aid: int, req: AcheteurReq):
     try:
-        run("UPDATE acheteurs SET nom=?,parrain=?,commission_parrain=?,identifiant_boutique=?,mdp_boutique=? WHERE id=?",
-            [req.nom.strip(),req.parrain.strip() or "Aucun",req.commission_parrain,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),aid])
+        run("UPDATE acheteurs SET nom=?,prenom=?,parrain=?,commission_parrain=? WHERE id=?",
+            [req.nom.strip(),req.prenom.strip(),req.parrain.strip() or "Aucun",req.commission_parrain,aid])
         return {"ok":True}
     except: raise HTTPException(400,"Ce nom existe déjà")
 @app.delete("/api/acheteurs/{aid}")
@@ -179,14 +192,10 @@ def add_note(aid: int, req: NoteReq):
 def del_note(nid: int): run("DELETE FROM notes_acheteurs WHERE id=?",[nid]); return {"ok":True}
 
 # ━━━ COMMANDES ━━━
-def get_or_create_ach(nom, ident="", mdp=""):
+def get_or_create_ach(nom):
     row = query_val("SELECT id FROM acheteurs WHERE nom=?",[nom.strip()])
-    if row:
-        aid = int(row)
-        if ident.strip(): run("UPDATE acheteurs SET identifiant_boutique=? WHERE id=? AND (identifiant_boutique IS NULL OR identifiant_boutique='')",[ident.strip(),aid])
-        if mdp.strip(): run("UPDATE acheteurs SET mdp_boutique=? WHERE id=? AND (mdp_boutique IS NULL OR mdp_boutique='')",[mdp.strip(),aid])
-        return aid
-    rs = run("INSERT INTO acheteurs (nom,identifiant_boutique,mdp_boutique,date_creation) VALUES (?,?,?,?)",[nom.strip(),ident.strip(),mdp.strip(),now()])
+    if row: return int(row)
+    rs = run("INSERT INTO acheteurs (nom,date_creation) VALUES (?,?)",[nom.strip(),now()])
     return rs.last_insert_rowid
 
 def calc_comm(mont, mode, pct, eur, parrain, cp):
@@ -197,31 +206,32 @@ def calc_comm(mont, mode, pct, eur, parrain, cp):
 
 @app.get("/api/commandes")
 def get_commandes():
-    return query("""SELECT c.id,c.date,a.nom as acheteur,c.boutique,c.montant_total,
+    return query("""SELECT c.id,c.date,a.nom as acheteur,a.prenom,c.boutique,c.montant_total,
         c.commission_mode,c.commission_vendeur_pct,c.commission_vendeur_eur,
         a.parrain,c.commission_parrain_eur,c.notes,c.statut,c.paiement,
-        c.technique,c.cout_total,c.acheteur_id
+        c.technique,c.cout_total,c.acheteur_id,c.identifiant_boutique,c.mdp_boutique
         FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id ORDER BY c.date DESC""")
 
 class CommandeReq(BaseModel):
     acheteur_nom: str; boutique: str; montant_total: float
     commission_mode: str = "pct"; commission_pct: float = 0.0; commission_eur: float = 0.0
     notes: str = ""; statut: str = "En cours"; paiement: str = "Non payée"; technique: str = ""
-    identifiant: str = ""; mdp: str = ""
+    identifiant_boutique: str = ""; mdp_boutique: str = ""
 @app.post("/api/commandes")
 def add_commande(req: CommandeReq):
-    aid = get_or_create_ach(req.acheteur_nom, req.identifiant, req.mdp)
+    aid = get_or_create_ach(req.acheteur_nom)
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[aid])
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
-    run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        [now(),aid,req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout])
+    run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total,identifiant_boutique,mdp_boutique) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        [now(),aid,req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip()])
     return {"ok":True,"commission":cv,"cout":cout}
 
 class CommandeEditReq(BaseModel):
     boutique: str; montant_total: float
     commission_mode: str = "pct"; commission_pct: float = 0.0; commission_eur: float = 0.0
     notes: str = ""; statut: str = "En cours"; paiement: str = "Non payée"; technique: str = ""
+    identifiant_boutique: str = ""; mdp_boutique: str = ""
 @app.put("/api/commandes/{cid}")
 def mod_commande(cid: int, req: CommandeEditReq):
     aid = query_val("SELECT acheteur_id FROM commandes WHERE id=?",[cid])
@@ -229,8 +239,8 @@ def mod_commande(cid: int, req: CommandeEditReq):
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[int(aid)])
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
-    run("UPDATE commandes SET boutique=?,montant_total=?,commission_mode=?,commission_vendeur_pct=?,commission_vendeur_eur=?,commission_parrain_eur=?,notes=?,statut=?,paiement=?,technique=?,cout_total=? WHERE id=?",
-        [req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,cid])
+    run("UPDATE commandes SET boutique=?,montant_total=?,commission_mode=?,commission_vendeur_pct=?,commission_vendeur_eur=?,commission_parrain_eur=?,notes=?,statut=?,paiement=?,technique=?,cout_total=?,identifiant_boutique=?,mdp_boutique=? WHERE id=?",
+        [req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),cid])
     return {"ok":True}
 
 @app.post("/api/commandes/{cid}/toggle-paiement")
@@ -240,6 +250,17 @@ def toggle_paiement(cid: int):
     new_val = "Payée" if current != "Payée" else "Non payée"
     run("UPDATE commandes SET paiement=? WHERE id=?",[new_val,cid])
     return {"ok":True,"paiement":new_val}
+
+@app.get("/api/commandes/{cid}")
+def get_commande_detail(cid: int):
+    row = query_one("""SELECT c.id,c.date,a.nom as acheteur,a.prenom,c.boutique,c.montant_total,
+        c.commission_mode,c.commission_vendeur_pct,c.commission_vendeur_eur,
+        a.parrain,c.commission_parrain_eur,c.notes,c.statut,c.paiement,
+        c.technique,c.cout_total,c.acheteur_id,
+        c.identifiant_boutique,c.mdp_boutique,a.commission_parrain
+        FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id WHERE c.id=?""", [cid])
+    if not row: raise HTTPException(404)
+    return row
 
 @app.delete("/api/commandes/{cid}")
 def del_commande(cid: int): run("DELETE FROM commandes WHERE id=?",[cid]); return {"ok":True}
@@ -268,15 +289,13 @@ def valider_demande(did: int, req: ValiderReq):
     notes = f"{dem['notes_client']} | {req.notes_admin}".strip(" | ")
     if req.client_id:
         aid = req.client_id
-        if dem['identifiant_boutique']: run("UPDATE acheteurs SET identifiant_boutique=? WHERE id=?",[dem['identifiant_boutique'],aid])
-        if dem['mdp_boutique']: run("UPDATE acheteurs SET mdp_boutique=? WHERE id=?",[dem['mdp_boutique'],aid])
     else:
-        aid = get_or_create_ach(dem['nom_client'], dem['identifiant_boutique'], dem['mdp_boutique'])
+        aid = get_or_create_ach(dem['nom_client'])
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[aid])
     cv,cp,pf = calc_comm(dem['montant'], req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
-    run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total) VALUES (?,?,?,?,?,?,?,?,?,'Validée','Non payée',?,?)""",
-        [now(),aid,dem['boutique'],dem['montant'],req.commission_mode,pf,cv,cp,notes,req.technique,cout])
+    run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total,identifiant_boutique,mdp_boutique) VALUES (?,?,?,?,?,?,?,?,?,'Validée','Non payée',?,?,?,?)""",
+        [now(),aid,dem['boutique'],dem['montant'],req.commission_mode,pf,cv,cp,notes,req.technique,cout,dem['identifiant_boutique'],dem['mdp_boutique']])
     run("UPDATE demandes SET statut='Validée' WHERE id=?",[did])
     return {"ok":True,"commission":cv,"cout":cout}
 
