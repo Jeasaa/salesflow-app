@@ -79,11 +79,6 @@ def change_password(req: ChangePwReq):
     run("UPDATE users SET password_hash=? WHERE username=?",[hash_pw(req.new_password),req.username])
     return {"ok":True}
 
-@app.get("/api/reset-admin")
-def reset_admin():
-    run("UPDATE users SET password_hash=? WHERE username='admin'",[hash_pw("admin")])
-    return {"ok":True,"message":"Password reset to admin/admin"}
-
 # ━━━ SETTINGS ━━━
 @app.get("/api/settings")
 def get_settings():
