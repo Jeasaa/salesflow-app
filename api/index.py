@@ -38,6 +38,9 @@ def init_db():
         "CREATE TABLE IF NOT EXISTS couts_techniques (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL UNIQUE,prix REAL NOT NULL DEFAULT 0.0)",
         "CREATE TABLE IF NOT EXISTS parrain_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT,parrain_nom TEXT NOT NULL,montant REAL NOT NULL,description TEXT DEFAULT '',date TEXT,type TEXT DEFAULT 'prime')",
         "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY,value TEXT)",
+        "CREATE TABLE IF NOT EXISTS couts_mensuels (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL,montant REAL NOT NULL,mois TEXT NOT NULL,date_ajout TEXT)",
+        "CREATE TABLE IF NOT EXISTS comptes_catalogue (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL UNIQUE,prix_achat REAL NOT NULL DEFAULT 0,prix_revente REAL NOT NULL DEFAULT 0)",
+        "CREATE TABLE IF NOT EXISTS commande_comptes (id INTEGER PRIMARY KEY AUTOINCREMENT,commande_id INTEGER NOT NULL,compte_nom TEXT NOT NULL,prix_achat REAL NOT NULL,prix_revente REAL NOT NULL,paiement TEXT DEFAULT 'Non payé')",
     ]
     for t in tables:
         try: run(t)
@@ -187,6 +190,7 @@ def mod_acheteur(aid: int, req: AcheteurReq):
     except: raise HTTPException(400,"Ce nom existe déjà")
 @app.delete("/api/acheteurs/{aid}")
 def del_acheteur(aid: int):
+    run("DELETE FROM commande_comptes WHERE commande_id IN (SELECT id FROM commandes WHERE acheteur_id=?)",[aid])
     run("DELETE FROM notes_acheteurs WHERE acheteur_id=?",[aid])
     run("DELETE FROM commandes WHERE acheteur_id=?",[aid])
     run("DELETE FROM acheteurs WHERE id=?",[aid])
@@ -234,9 +238,9 @@ def add_commande(req: CommandeReq):
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[aid])
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
-    run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total,identifiant_boutique,mdp_boutique) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+    rs = run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total,identifiant_boutique,mdp_boutique) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         [now(),aid,req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip()])
-    return {"ok":True,"commission":cv,"cout":cout}
+    return {"ok":True,"id":rs.last_insert_rowid,"commission":cv,"cout":cout}
 
 class CommandeEditReq(BaseModel):
     boutique: str; montant_total: float
@@ -271,10 +275,14 @@ def get_commande_detail(cid: int):
         c.identifiant_boutique,c.mdp_boutique,a.commission_parrain
         FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id WHERE c.id=?""", [cid])
     if not row: raise HTTPException(404)
+    row['comptes'] = query("SELECT * FROM commande_comptes WHERE commande_id=? ORDER BY id", [cid])
     return row
 
 @app.delete("/api/commandes/{cid}")
-def del_commande(cid: int): run("DELETE FROM commandes WHERE id=?",[cid]); return {"ok":True}
+def del_commande(cid: int):
+    run("DELETE FROM commande_comptes WHERE commande_id=?",[cid])
+    run("DELETE FROM commandes WHERE id=?",[cid])
+    return {"ok":True}
 
 # ━━━ DEMANDES ━━━
 class DemandeReq(BaseModel):
@@ -462,8 +470,92 @@ def analytics_boutiques():
         d['pct'] = round(d['commandes'] / total * 100, 1) if total > 0 else 0
     return data
 
+# ━━━ COÛTS MENSUELS ━━━
+@app.get("/api/couts-mensuels")
+def get_couts_mensuels(mois: Optional[str] = None):
+    if mois: return query("SELECT * FROM couts_mensuels WHERE mois=? ORDER BY nom",[mois])
+    return query("SELECT * FROM couts_mensuels ORDER BY mois DESC, nom")
+class CoutMensuelReq(BaseModel):
+    nom: str; montant: float; mois: str
+@app.post("/api/couts-mensuels")
+def add_cout_mensuel(req: CoutMensuelReq):
+    run("INSERT INTO couts_mensuels (nom,montant,mois,date_ajout) VALUES (?,?,?,?)",[req.nom.strip(),req.montant,req.mois,now()])
+    return {"ok":True}
+@app.delete("/api/couts-mensuels/{cid}")
+def del_cout_mensuel(cid: int):
+    run("DELETE FROM couts_mensuels WHERE id=?",[cid]); return {"ok":True}
+
+# ━━━ COMPTES CATALOGUE ━━━
+@app.get("/api/comptes-catalogue")
+def get_comptes_catalogue():
+    return query("SELECT * FROM comptes_catalogue ORDER BY nom")
+class CompteCatalogueReq(BaseModel):
+    nom: str; prix_achat: float; prix_revente: float
+@app.post("/api/comptes-catalogue")
+def add_compte_catalogue(req: CompteCatalogueReq):
+    if query_val("SELECT id FROM comptes_catalogue WHERE nom=?",[req.nom.strip()]):
+        run("UPDATE comptes_catalogue SET prix_achat=?,prix_revente=? WHERE nom=?",[req.prix_achat,req.prix_revente,req.nom.strip()])
+    else:
+        run("INSERT INTO comptes_catalogue (nom,prix_achat,prix_revente) VALUES (?,?,?)",[req.nom.strip(),req.prix_achat,req.prix_revente])
+    return {"ok":True}
+@app.delete("/api/comptes-catalogue/{nom}")
+def del_compte_catalogue(nom: str):
+    run("DELETE FROM comptes_catalogue WHERE nom=?",[nom]); return {"ok":True}
+
+# ━━━ COMMANDE COMPTES ━━━
+@app.get("/api/commandes/{cid}/comptes")
+def get_commande_comptes(cid: int):
+    return query("SELECT * FROM commande_comptes WHERE commande_id=? ORDER BY id",[cid])
+@app.post("/api/commandes/{cid}/comptes")
+def add_commande_compte(cid: int, req: CompteCatalogueReq):
+    run("INSERT INTO commande_comptes (commande_id,compte_nom,prix_achat,prix_revente) VALUES (?,?,?,?)",[cid,req.nom.strip(),req.prix_achat,req.prix_revente])
+    return {"ok":True}
+@app.post("/api/commande-comptes/{ccid}/toggle-paiement")
+def toggle_compte_paiement(ccid: int):
+    current = query_val("SELECT paiement FROM commande_comptes WHERE id=?",[ccid])
+    if current is None: raise HTTPException(404)
+    new_val = "Payé" if current != "Payé" else "Non payé"
+    run("UPDATE commande_comptes SET paiement=? WHERE id=?",[new_val,ccid])
+    return {"ok":True,"paiement":new_val}
+@app.delete("/api/commande-comptes/{ccid}")
+def del_commande_compte(ccid: int):
+    run("DELETE FROM commande_comptes WHERE id=?",[ccid]); return {"ok":True}
+
+# ━━━ FINANCES MENSUEL ━━━
+@app.get("/api/finances/mensuel")
+def finances_mensuel():
+    mois_data = query("""
+        SELECT strftime('%Y-%m', c.date) as mois, COUNT(*) as nb_commandes,
+            COALESCE(SUM(c.montant_total),0) as ca,
+            COALESCE(SUM(c.commission_vendeur_eur),0) as commissions_total,
+            COALESCE(SUM(CASE WHEN c.paiement='Payée' THEN c.commission_vendeur_eur ELSE 0 END),0) as commissions_payees,
+            COALESCE(SUM(c.cout_total),0) as couts_techniques,
+            COALESCE(SUM(CASE WHEN c.paiement='Payée' THEN c.cout_total ELSE 0 END),0) as couts_techniques_payes
+        FROM commandes c WHERE c.date IS NOT NULL
+        GROUP BY strftime('%Y-%m', c.date) ORDER BY mois DESC
+    """)
+    for m in mois_data:
+        cm = query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels WHERE mois=?",[m['mois']])
+        m['couts_mensuels'] = float(cm) if cm else 0
+        comptes = query_one("""
+            SELECT COALESCE(SUM(cc.prix_revente-cc.prix_achat),0) as benef_comptes,
+                COALESCE(SUM(cc.prix_achat),0) as cout_comptes,
+                COUNT(cc.id) as nb_comptes,
+                COUNT(CASE WHEN cc.paiement='Payé' THEN 1 END) as nb_comptes_payes,
+                COALESCE(SUM(CASE WHEN cc.paiement='Payé' THEN cc.prix_revente-cc.prix_achat ELSE 0 END),0) as benef_comptes_payes
+            FROM commande_comptes cc JOIN commandes c ON cc.commande_id=c.id
+            WHERE strftime('%Y-%m', c.date)=?
+        """,[m['mois']])
+        m['benef_comptes'] = float(comptes['benef_comptes']) if comptes else 0
+        m['cout_comptes'] = float(comptes['cout_comptes']) if comptes else 0
+        m['nb_comptes'] = int(comptes['nb_comptes']) if comptes else 0
+        m['nb_comptes_payes'] = int(comptes['nb_comptes_payes']) if comptes else 0
+        m['benef_comptes_payes'] = float(comptes['benef_comptes_payes']) if comptes else 0
+        m['benefice_net'] = float(m['commissions_payees']) - float(m['couts_techniques_payes']) - m['couts_mensuels'] + m['benef_comptes_payes']
+    return mois_data
+
 # ━━━ RESET ━━━
 @app.post("/api/reset")
 def reset_all():
-    for t in ["commandes","acheteurs","notes_acheteurs","demandes","objectifs","parrain_transactions"]: run(f"DELETE FROM {t}")
+    for t in ["commande_comptes","commandes","acheteurs","notes_acheteurs","demandes","objectifs","parrain_transactions","couts_mensuels"]: run(f"DELETE FROM {t}")
     return {"ok":True}
