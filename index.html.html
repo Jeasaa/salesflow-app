@@ -246,11 +246,11 @@ function SearchOverlay({onClose,onSelect}){const[q,setQ]=useState('');const[res,
 function Dashboard(){const[d,setD]=useState(null);useEffect(()=>{$api('/api/dashboard').then(setD)},[]);if(!d)return<div className="empty">Chargement...</div>;return<div>
   {d.pending>0&&<div className="warn">📩 {d.pending} demande(s) en attente</div>}
   <div className="kpi-grid">
+    <div className="kpi"><div className="label">Bénéf du mois</div><div className="value" style={{color:d.benef_mois>=0?'var(--green)':'var(--red)'}}>{d.benef_mois>=0?'+':''}{fmt(d.benef_mois)} €</div><div style={{fontSize:'.65rem',color:'var(--text3)',marginTop:2}}>{d.mois_actuel}</div></div>
+    <div className="kpi"><div className="label">Bénéf total réalisé</div><div className="value" style={{color:d.benef_total>=0?'var(--green)':'var(--red)'}}>{d.benef_total>=0?'+':''}{fmt(d.benef_total)} €</div></div>
+    <div className="kpi"><div className="label">Impayés</div><div className="value amber">{fmt(d.impayes)} €</div>{d.nb_impayes>0&&<div style={{fontSize:'.65rem',color:'var(--text3)',marginTop:2}}>{d.nb_impayes} commande{d.nb_impayes>1?'s':''}</div>}</div>
     <div className="kpi"><div className="label">Clients</div><div className="value">{d.clients}</div></div>
     <div className="kpi"><div className="label">Commandes</div><div className="value">{d.commandes}</div></div>
-    <div className="kpi"><div className="label">Commissions en cours</div><div className="value accent">{fmt(d.comm_en_cours)} €</div></div>
-    <div className="kpi"><div className="label">En attente paiement</div><div className="value amber">{fmt(d.en_attente_paiement)} €</div></div>
-    <div className="kpi"><div className="label">Bénéfice</div><div className="value green">{fmt(d.benefice)} €</div></div>
   </div>
   <div className="st">Dernières commandes</div>
   <div className="tbl"><table><thead><tr><th>Date</th><th>Client</th><th>Boutique</th><th>Montant</th><th>Commission</th><th>Technique</th><th>Statut</th><th>Paiement</th></tr></thead>

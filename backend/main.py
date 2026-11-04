@@ -103,30 +103,33 @@ def set_setting(req: SettingReq):
 # ━━━ DASHBOARD ━━━
 @app.get("/api/dashboard")
 def dashboard():
+    mois_actuel = datetime.now().strftime('%Y-%m')
     stats = query_one("""SELECT
         (SELECT COUNT(*) FROM acheteurs) as clients,
         (SELECT COUNT(*) FROM commandes) as commandes,
-        (SELECT COUNT(*) FROM commandes WHERE statut='En cours') as nb_en_cours,
-        (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE statut='En cours') as comm_en_cours,
-        (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE statut='En cours') as couts_en_cours,
-        (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE statut='Validée' AND paiement='Non payée') as en_attente_paiement,
         (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE paiement='Payée') as comm_payee,
         (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE paiement='Payée') as couts_payes,
-        (SELECT COALESCE(SUM(cout_total),0) FROM commandes WHERE statut='Fails') as couts_fails,
-        (SELECT COUNT(*) FROM commandes WHERE statut='Fails') as nb_fails,
+        (SELECT COALESCE(SUM(commission_vendeur_eur),0) FROM commandes WHERE statut='Validée' AND paiement='Non payée') as impayes,
+        (SELECT COUNT(*) FROM commandes WHERE statut='Validée' AND paiement='Non payée') as nb_impayes,
         (SELECT COUNT(*) FROM demandes WHERE statut='En attente') as pending
     """)
-    benefice = float(stats['comm_payee']) - float(stats['couts_payes']) - float(stats['couts_fails'])
-    comm_en_cours_net = float(stats['comm_en_cours']) - float(stats['couts_en_cours'])
+    mois_stats = query_one("""SELECT
+        COALESCE(SUM(CASE WHEN paiement='Payée' THEN commission_vendeur_eur ELSE 0 END),0) as comm_mois,
+        COALESCE(SUM(CASE WHEN paiement='Payée' THEN cout_total ELSE 0 END),0) as couts_mois
+    FROM commandes WHERE strftime('%Y-%m', date)=?""",[mois_actuel])
+    couts_mensuels_mois = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels WHERE mois=?",[mois_actuel]) or 0)
+    comptes_mois = query_one("""SELECT COALESCE(SUM(CASE WHEN cc.paiement='Payé' THEN cc.prix_revente-cc.prix_achat ELSE 0 END),0) as benef
+        FROM commande_comptes cc JOIN commandes c ON cc.commande_id=c.id WHERE strftime('%Y-%m', c.date)=?""",[mois_actuel])
+    benef_mois = float(mois_stats['comm_mois']) - float(mois_stats['couts_mois']) - couts_mensuels_mois + float(comptes_mois['benef'] if comptes_mois else 0)
+    couts_mensuels_total = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels") or 0)
+    comptes_total = float(query_val("SELECT COALESCE(SUM(CASE WHEN paiement='Payé' THEN prix_revente-prix_achat ELSE 0 END),0) FROM commande_comptes") or 0)
+    benef_total = float(stats['comm_payee']) - float(stats['couts_payes']) - couts_mensuels_total + comptes_total
     recent = query("SELECT c.id,c.date,a.nom as acheteur,c.boutique,c.montant_total,c.commission_vendeur_eur,c.technique,c.cout_total,c.statut,c.paiement FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id ORDER BY c.date DESC LIMIT 10")
     return {
         "clients":stats['clients'],"commandes":stats['commandes'],
-        "nb_en_cours":int(stats['nb_en_cours']),
-        "comm_en_cours":comm_en_cours_net,
-        "en_attente_paiement":float(stats['en_attente_paiement']),
-        "benefice":benefice,
-        "couts_fails":float(stats['couts_fails']),
-        "nb_fails":int(stats['nb_fails']),
+        "benef_mois":benef_mois,"mois_actuel":mois_actuel,
+        "benef_total":benef_total,
+        "impayes":float(stats['impayes']),"nb_impayes":int(stats['nb_impayes']),
         "pending":int(stats['pending']),"recent":recent
     }
 
