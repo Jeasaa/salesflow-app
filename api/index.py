@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import libsql_client
 import hashlib
+import re
 import jwt
 from datetime import datetime, timedelta
 
@@ -206,6 +207,24 @@ def add_note(aid: int, req: NoteReq):
 @app.delete("/api/notes/{nid}")
 def del_note(nid: int): run("DELETE FROM notes_acheteurs WHERE id=?",[nid]); return {"ok":True}
 
+# ━━━ BOUTIQUES ━━━
+def normalize_boutique(name):
+    name = name.strip()
+    if not name: return name
+    existing = query("SELECT DISTINCT boutique FROM commandes WHERE boutique IS NOT NULL AND boutique != ''")
+    clean = re.sub(r'\.(fr|com|de|co\.uk|es|it|nl|be|eu|net|org)$', '', name, flags=re.IGNORECASE).strip()
+    for row in existing:
+        b = row['boutique']
+        b_clean = re.sub(r'\.(fr|com|de|co\.uk|es|it|nl|be|eu|net|org)$', '', b, flags=re.IGNORECASE).strip()
+        if b_clean.lower() == clean.lower():
+            return b
+    return name
+
+@app.get("/api/boutiques")
+def get_boutiques():
+    rows = query("SELECT DISTINCT boutique FROM commandes WHERE boutique IS NOT NULL AND boutique != '' ORDER BY boutique")
+    return [r['boutique'] for r in rows]
+
 # ━━━ COMMANDES ━━━
 def get_or_create_ach(nom):
     row = query_val("SELECT id FROM acheteurs WHERE nom=?",[nom.strip()])
@@ -238,8 +257,9 @@ def add_commande(req: CommandeReq):
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[aid])
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
+    boutique = normalize_boutique(req.boutique)
     rs = run("""INSERT INTO commandes (date,acheteur_id,boutique,montant_total,commission_mode,commission_vendeur_pct,commission_vendeur_eur,commission_parrain_eur,notes,statut,paiement,technique,cout_total,identifiant_boutique,mdp_boutique) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        [now(),aid,req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip()])
+        [now(),aid,boutique,req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip()])
     return {"ok":True,"id":rs.last_insert_rowid,"commission":cv,"cout":cout}
 
 class CommandeEditReq(BaseModel):
@@ -254,8 +274,9 @@ def mod_commande(cid: int, req: CommandeEditReq):
     ach = query_one("SELECT * FROM acheteurs WHERE id=?",[int(aid)])
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
+    boutique = normalize_boutique(req.boutique)
     run("UPDATE commandes SET boutique=?,montant_total=?,commission_mode=?,commission_vendeur_pct=?,commission_vendeur_eur=?,commission_parrain_eur=?,notes=?,statut=?,paiement=?,technique=?,cout_total=?,identifiant_boutique=?,mdp_boutique=? WHERE id=?",
-        [req.boutique.strip(),req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),cid])
+        [boutique,req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),cid])
     return {"ok":True}
 
 @app.post("/api/commandes/{cid}/toggle-paiement")
