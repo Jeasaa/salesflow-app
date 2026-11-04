@@ -56,6 +56,8 @@ def init_db():
     except: pass
     try: run("ALTER TABLE comptes_catalogue ADD COLUMN boutique TEXT DEFAULT ''")
     except: pass
+    try: run("ALTER TABLE commandes ADD COLUMN date_paiement TEXT DEFAULT ''")
+    except: pass
     if query_val("SELECT COUNT(*) FROM users") == 0:
         run("INSERT INTO users (username,password_hash,role,created_at) VALUES (?,?,?,?)",
             ["admin", hashlib.sha256("admin".encode()).hexdigest(), "admin", now()])
@@ -114,12 +116,12 @@ def dashboard():
         (SELECT COUNT(*) FROM demandes WHERE statut='En attente') as pending
     """)
     mois_stats = query_one("""SELECT
-        COALESCE(SUM(CASE WHEN paiement='Payée' THEN commission_vendeur_eur ELSE 0 END),0) as comm_mois,
-        COALESCE(SUM(CASE WHEN paiement='Payée' THEN cout_total ELSE 0 END),0) as couts_mois
-    FROM commandes WHERE strftime('%Y-%m', date)=?""",[mois_actuel])
+        COALESCE(SUM(commission_vendeur_eur),0) as comm_mois,
+        COALESCE(SUM(cout_total),0) as couts_mois
+    FROM commandes WHERE paiement='Payée' AND strftime('%Y-%m', date_paiement)=?""",[mois_actuel])
     couts_mensuels_mois = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels WHERE mois=?",[mois_actuel]) or 0)
     comptes_mois = query_one("""SELECT COALESCE(SUM(CASE WHEN cc.paiement='Payé' THEN cc.prix_revente-cc.prix_achat ELSE 0 END),0) as benef
-        FROM commande_comptes cc JOIN commandes c ON cc.commande_id=c.id WHERE strftime('%Y-%m', c.date)=?""",[mois_actuel])
+        FROM commande_comptes cc JOIN commandes c ON cc.commande_id=c.id WHERE strftime('%Y-%m', c.date_paiement)=?""",[mois_actuel])
     benef_mois = float(mois_stats['comm_mois']) - float(mois_stats['couts_mois']) - couts_mensuels_mois + float(comptes_mois['benef'] if comptes_mois else 0)
     couts_mensuels_total = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels") or 0)
     comptes_total = float(query_val("SELECT COALESCE(SUM(CASE WHEN paiement='Payé' THEN prix_revente-prix_achat ELSE 0 END),0) FROM commande_comptes") or 0)
@@ -280,8 +282,16 @@ def mod_commande(cid: int, req: CommandeEditReq):
     cv,cp,pf = calc_comm(req.montant_total, req.commission_mode, req.commission_pct, req.commission_eur, ach['parrain'], ach['commission_parrain'])
     cout = calc_cout(req.technique)
     boutique = normalize_boutique(req.boutique)
-    run("UPDATE commandes SET boutique=?,montant_total=?,commission_mode=?,commission_vendeur_pct=?,commission_vendeur_eur=?,commission_parrain_eur=?,notes=?,statut=?,paiement=?,technique=?,cout_total=?,identifiant_boutique=?,mdp_boutique=? WHERE id=?",
-        [boutique,req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip(),cid])
+    old_paiement = query_val("SELECT paiement FROM commandes WHERE id=?",[cid])
+    date_p = now() if req.paiement == "Payée" and old_paiement != "Payée" else ("" if req.paiement != "Payée" else None)
+    sql = "UPDATE commandes SET boutique=?,montant_total=?,commission_mode=?,commission_vendeur_pct=?,commission_vendeur_eur=?,commission_parrain_eur=?,notes=?,statut=?,paiement=?,technique=?,cout_total=?,identifiant_boutique=?,mdp_boutique=?"
+    params = [boutique,req.montant_total,req.commission_mode,pf,cv,cp,req.notes.strip(),req.statut,req.paiement,req.technique,cout,req.identifiant_boutique.strip(),req.mdp_boutique.strip()]
+    if date_p is not None:
+        sql += ",date_paiement=?"
+        params.append(date_p)
+    sql += " WHERE id=?"
+    params.append(cid)
+    run(sql, params)
     return {"ok":True}
 
 @app.post("/api/commandes/{cid}/toggle-paiement")
@@ -289,7 +299,8 @@ def toggle_paiement(cid: int):
     current = query_val("SELECT paiement FROM commandes WHERE id=?",[cid])
     if current is None: raise HTTPException(404)
     new_val = "Payée" if current != "Payée" else "Non payée"
-    run("UPDATE commandes SET paiement=? WHERE id=?",[new_val,cid])
+    date_p = now() if new_val == "Payée" else ""
+    run("UPDATE commandes SET paiement=?,date_paiement=? WHERE id=?",[new_val,date_p,cid])
     return {"ok":True,"paiement":new_val}
 
 @app.get("/api/commandes/{cid}")
