@@ -140,7 +140,18 @@ def get_prix(nom):
     v = query_val("SELECT prix FROM couts_techniques WHERE nom=?",[nom]); return float(v) if v else 0.0
 def calc_cout(tech):
     if not tech: return 0.0
-    return sum(get_prix(t.strip()) for t in tech.split(",") if t.strip())
+    total = 0.0
+    for part in tech.split(","):
+        part = part.strip()
+        if not part: continue
+        if ':' in part:
+            nom, qty = part.rsplit(':', 1)
+            try: qty = int(qty)
+            except: qty = 1
+        else:
+            nom, qty = part, 1
+        total += get_prix(nom.strip()) * qty
+    return total
 
 # ━━━ CLIENTS ━━━
 @app.get("/api/acheteurs")
