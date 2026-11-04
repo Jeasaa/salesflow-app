@@ -40,7 +40,7 @@ def init_db():
         "CREATE TABLE IF NOT EXISTS parrain_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT,parrain_nom TEXT NOT NULL,montant REAL NOT NULL,description TEXT DEFAULT '',date TEXT,type TEXT DEFAULT 'prime')",
         "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY,value TEXT)",
         "CREATE TABLE IF NOT EXISTS couts_mensuels (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL,montant REAL NOT NULL,mois TEXT NOT NULL,date_ajout TEXT)",
-        "CREATE TABLE IF NOT EXISTS comptes_catalogue (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL UNIQUE,prix_achat REAL NOT NULL DEFAULT 0,prix_revente REAL NOT NULL DEFAULT 0)",
+        "CREATE TABLE IF NOT EXISTS comptes_catalogue (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL UNIQUE,prix_achat REAL NOT NULL DEFAULT 0,prix_revente REAL NOT NULL DEFAULT 0,boutique TEXT DEFAULT '')",
         "CREATE TABLE IF NOT EXISTS commande_comptes (id INTEGER PRIMARY KEY AUTOINCREMENT,commande_id INTEGER NOT NULL,compte_nom TEXT NOT NULL,prix_achat REAL NOT NULL,prix_revente REAL NOT NULL,paiement TEXT DEFAULT 'Non payé')",
     ]
     for t in tables:
@@ -53,6 +53,8 @@ def init_db():
     try: run("ALTER TABLE commandes ADD COLUMN identifiant_boutique TEXT DEFAULT ''")
     except: pass
     try: run("ALTER TABLE commandes ADD COLUMN mdp_boutique TEXT DEFAULT ''")
+    except: pass
+    try: run("ALTER TABLE comptes_catalogue ADD COLUMN boutique TEXT DEFAULT ''")
     except: pass
     if query_val("SELECT COUNT(*) FROM users") == 0:
         run("INSERT INTO users (username,password_hash,role,created_at) VALUES (?,?,?,?)",
@@ -511,13 +513,13 @@ def del_cout_mensuel(cid: int):
 def get_comptes_catalogue():
     return query("SELECT * FROM comptes_catalogue ORDER BY nom")
 class CompteCatalogueReq(BaseModel):
-    nom: str; prix_achat: float; prix_revente: float
+    nom: str; prix_achat: float; prix_revente: float; boutique: str = ''
 @app.post("/api/comptes-catalogue")
 def add_compte_catalogue(req: CompteCatalogueReq):
     if query_val("SELECT id FROM comptes_catalogue WHERE nom=?",[req.nom.strip()]):
-        run("UPDATE comptes_catalogue SET prix_achat=?,prix_revente=? WHERE nom=?",[req.prix_achat,req.prix_revente,req.nom.strip()])
+        run("UPDATE comptes_catalogue SET prix_achat=?,prix_revente=?,boutique=? WHERE nom=?",[req.prix_achat,req.prix_revente,req.boutique.strip(),req.nom.strip()])
     else:
-        run("INSERT INTO comptes_catalogue (nom,prix_achat,prix_revente) VALUES (?,?,?)",[req.nom.strip(),req.prix_achat,req.prix_revente])
+        run("INSERT INTO comptes_catalogue (nom,prix_achat,prix_revente,boutique) VALUES (?,?,?,?)",[req.nom.strip(),req.prix_achat,req.prix_revente,req.boutique.strip()])
     return {"ok":True}
 @app.delete("/api/comptes-catalogue/{nom}")
 def del_compte_catalogue(nom: str):
