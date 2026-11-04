@@ -355,7 +355,9 @@ def search(q: str):
     return ach + cmd
 
 @app.get("/api/techniques")
-def get_techniques(): return TECHNIQUES
+def get_techniques():
+    rows = query("SELECT nom FROM couts_techniques ORDER BY nom")
+    return [r['nom'] for r in rows]
     
 # ━━━ ANALYTICS ━━━
 @app.get("/api/analytics/ca-trend")
