@@ -42,6 +42,7 @@ def init_db():
         "CREATE TABLE IF NOT EXISTS couts_mensuels (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL,montant REAL NOT NULL,mois TEXT NOT NULL,date_ajout TEXT)",
         "CREATE TABLE IF NOT EXISTS comptes_catalogue (id INTEGER PRIMARY KEY AUTOINCREMENT,nom TEXT NOT NULL UNIQUE,prix_achat REAL NOT NULL DEFAULT 0,prix_revente REAL NOT NULL DEFAULT 0,boutique TEXT DEFAULT '')",
         "CREATE TABLE IF NOT EXISTS commande_comptes (id INTEGER PRIMARY KEY AUTOINCREMENT,commande_id INTEGER NOT NULL,compte_nom TEXT NOT NULL,prix_achat REAL NOT NULL,prix_revente REAL NOT NULL,paiement TEXT DEFAULT 'Non payé')",
+        "CREATE TABLE IF NOT EXISTS acheteur_comptes (id INTEGER PRIMARY KEY AUTOINCREMENT,acheteur_id INTEGER NOT NULL,compte_nom TEXT NOT NULL,prix_achat REAL NOT NULL DEFAULT 0,prix_revente REAL NOT NULL DEFAULT 0,paiement TEXT DEFAULT 'Non payé',date TEXT)",
     ]
     for t in tables:
         try: run(t)
@@ -122,10 +123,12 @@ def dashboard():
     couts_mensuels_mois = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels WHERE mois=?",[mois_actuel]) or 0)
     comptes_mois = query_one("""SELECT COALESCE(SUM(CASE WHEN cc.paiement='Payé' THEN cc.prix_revente-cc.prix_achat ELSE 0 END),0) as benef
         FROM commande_comptes cc JOIN commandes c ON cc.commande_id=c.id WHERE strftime('%Y-%m', c.date_paiement)=?""",[mois_actuel])
-    benef_mois = float(mois_stats['comm_mois']) - float(mois_stats['couts_mois']) - couts_mensuels_mois + float(comptes_mois['benef'] if comptes_mois else 0)
+    ach_comptes_mois = float(query_val("SELECT COALESCE(SUM(CASE WHEN paiement='Payé' THEN prix_revente-prix_achat ELSE 0 END),0) FROM acheteur_comptes WHERE strftime('%Y-%m', date)=?",[mois_actuel]) or 0)
+    benef_mois = float(mois_stats['comm_mois']) - float(mois_stats['couts_mois']) - couts_mensuels_mois + float(comptes_mois['benef'] if comptes_mois else 0) + ach_comptes_mois
     couts_mensuels_total = float(query_val("SELECT COALESCE(SUM(montant),0) FROM couts_mensuels") or 0)
     comptes_total = float(query_val("SELECT COALESCE(SUM(CASE WHEN paiement='Payé' THEN prix_revente-prix_achat ELSE 0 END),0) FROM commande_comptes") or 0)
-    benef_total = float(stats['comm_payee']) - float(stats['couts_payes']) - couts_mensuels_total + comptes_total
+    ach_comptes_total = float(query_val("SELECT COALESCE(SUM(CASE WHEN paiement='Payé' THEN prix_revente-prix_achat ELSE 0 END),0) FROM acheteur_comptes") or 0)
+    benef_total = float(stats['comm_payee']) - float(stats['couts_payes']) - couts_mensuels_total + comptes_total + ach_comptes_total
     recent = query("SELECT c.id,c.date,a.nom as acheteur,c.boutique,c.montant_total,c.commission_vendeur_eur,c.technique,c.cout_total,c.statut,c.paiement FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id ORDER BY c.date DESC LIMIT 10")
     return {
         "clients":stats['clients'],"commandes":stats['commandes'],
@@ -178,7 +181,8 @@ def get_acheteur(aid: int):
     if ach['nom']:
         r = query_val("SELECT COALESCE(SUM(c.commission_parrain_eur),0) FROM commandes c JOIN acheteurs a ON c.acheteur_id=a.id WHERE a.parrain=?",[ach['nom']])
         filleuls_commissions = float(r) if r else 0
-    return {"acheteur":ach,"commandes":cmds,"notes":notes,"filleuls_commissions":filleuls_commissions}
+    comptes = query("SELECT * FROM acheteur_comptes WHERE acheteur_id=? ORDER BY date DESC",[aid])
+    return {"acheteur":ach,"commandes":cmds,"notes":notes,"filleuls_commissions":filleuls_commissions,"comptes":comptes}
 
 class AcheteurReq(BaseModel):
     nom: str; prenom: str = ""; parrain: str = "Aucun"; commission_parrain: float = 0.0
@@ -199,10 +203,30 @@ def mod_acheteur(aid: int, req: AcheteurReq):
 @app.delete("/api/acheteurs/{aid}")
 def del_acheteur(aid: int):
     run("DELETE FROM commande_comptes WHERE commande_id IN (SELECT id FROM commandes WHERE acheteur_id=?)",[aid])
+    run("DELETE FROM acheteur_comptes WHERE acheteur_id=?",[aid])
     run("DELETE FROM notes_acheteurs WHERE acheteur_id=?",[aid])
     run("DELETE FROM commandes WHERE acheteur_id=?",[aid])
     run("DELETE FROM acheteurs WHERE id=?",[aid])
     return {"ok":True}
+
+# ━━━ ACHETEUR COMPTES ━━━
+class AcheteurCompteReq(BaseModel):
+    compte_nom: str; prix_achat: float; prix_revente: float
+@app.post("/api/acheteurs/{aid}/comptes")
+def add_acheteur_compte(aid: int, req: AcheteurCompteReq):
+    run("INSERT INTO acheteur_comptes (acheteur_id,compte_nom,prix_achat,prix_revente,date) VALUES (?,?,?,?,?)",
+        [aid,req.compte_nom.strip(),req.prix_achat,req.prix_revente,now()])
+    return {"ok":True}
+@app.post("/api/acheteur-comptes/{acid}/toggle-paiement")
+def toggle_acheteur_compte_paiement(acid: int):
+    current = query_val("SELECT paiement FROM acheteur_comptes WHERE id=?",[acid])
+    if current is None: raise HTTPException(404)
+    new_val = "Payé" if current != "Payé" else "Non payé"
+    run("UPDATE acheteur_comptes SET paiement=? WHERE id=?",[new_val,acid])
+    return {"ok":True,"paiement":new_val}
+@app.delete("/api/acheteur-comptes/{acid}")
+def del_acheteur_compte(acid: int):
+    run("DELETE FROM acheteur_comptes WHERE id=?",[acid]); return {"ok":True}
 
 # ━━━ NOTES ━━━
 class NoteReq(BaseModel):
@@ -594,5 +618,5 @@ def finances_mensuel():
 # ━━━ RESET ━━━
 @app.post("/api/reset")
 def reset_all():
-    for t in ["commande_comptes","commandes","acheteurs","notes_acheteurs","demandes","objectifs","parrain_transactions","couts_mensuels"]: run(f"DELETE FROM {t}")
+    for t in ["commande_comptes","acheteur_comptes","commandes","acheteurs","notes_acheteurs","demandes","objectifs","parrain_transactions","couts_mensuels"]: run(f"DELETE FROM {t}")
     return {"ok":True}
